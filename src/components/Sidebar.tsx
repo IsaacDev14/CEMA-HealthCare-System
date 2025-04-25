@@ -29,14 +29,19 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
         isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'
       } z-30`}
     >
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-blue-700 flex items-center">
-        <Link to="/" aria-label="Go to Dashboard">
+      {/* Logo and Title */}
+      <div className="px-6 py-6 border-b border-blue-700 flex items-center gap-3">
+        <Link to="/" aria-label="Go to Dashboard" className="flex items-center gap-3">
           <img
             src="https://cdn-icons-png.flaticon.com/512/1057/1057161.png"
             alt="CEMACare Logo"
-            className="w-10 h-10"
+            className="w-8 h-8"
           />
+          <h1
+            className="text-2xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-blue-400"
+          >
+            CEMACare
+          </h1>
         </Link>
       </div>
 
