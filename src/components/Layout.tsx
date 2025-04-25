@@ -15,7 +15,11 @@ const Layout: FC = () => {
       <Sidebar isOpen={isSidebarOpen} />
       <div className="flex-1 flex flex-col">
         <Topbar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main
+          className={`flex-1 p-6 overflow-y-auto transition-all duration-300 mt-16 ${
+            isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'
+          }`}
+        >
           <Outlet />
         </main>
       </div>

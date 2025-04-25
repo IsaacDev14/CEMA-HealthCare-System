@@ -12,10 +12,10 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
 
   const links = [
     { to: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" />, ariaLabel: 'Go to Dashboard', isPlaceholder: false },
-    { to: '/clients', label: 'Clients', icon: <FiUsers className="w-5 h-5" />, ariaLabel: 'View Clients', isPlaceholder: true },
-    { to: '/programs', label: 'Programs', icon: <FiLayers className="w-5 h-5" />, ariaLabel: 'Manage Programs', isPlaceholder: true },
-    { to: '/suggestions', label: 'Suggestions', icon: <FiMessageSquare className="w-5 h-5" />, ariaLabel: 'View Suggestions', isPlaceholder: true },
-    { to: '/feedback', label: 'Feedback', icon: <FiHeart className="w-5 h-5" />, ariaLabel: 'Provide Feedback', isPlaceholder: true },
+    { to: '/clients', label: 'Clients', icon: <FiUsers className="w-5 h-5" />, ariaLabel: 'View Clients', isPlaceholder: false },
+    { to: '/programs', label: 'Programs', icon: <FiLayers className="w-5 h-5" />, ariaLabel: 'Manage Programs', isPlaceholder: false },
+    { to: '/suggestions', label: 'Suggestions', icon: <FiMessageSquare className="w-5 h-5" />, ariaLabel: 'View Suggestions', isPlaceholder: false },
+    { to: '/feedback', label: 'Feedback', icon: <FiHeart className="w-5 h-5" />, ariaLabel: 'Provide Feedback', isPlaceholder: false },
   ];
 
   const handleLogout = () => {
@@ -27,7 +27,7 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
     <aside
       className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col transition-transform duration-300 transform ${
         isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'
-      } lg:static lg:translate-x-0 lg:w-64 z-20`}
+      } lg:static lg:translate-x-0 lg:w-64 z-30`}
     >
       {/* Logo/Title */}
       <div className="px-6 py-6 border-b border-blue-700">

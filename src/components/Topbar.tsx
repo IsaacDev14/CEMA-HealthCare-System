@@ -17,7 +17,11 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm p-4 flex items-center justify-between ">
+    <header
+      className={`fixed top-0 left-0 right-0 bg-white shadow-sm p-4 flex items-center justify-between z-20 transition-all duration-300 ${
+        isSidebarOpen ? 'lg:left-64' : 'lg:left-60'
+      }`}
+    >
       {/* Left: Title and Toggle Button */}
       <div className="flex items-center gap-4">
         <button
