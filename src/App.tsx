@@ -1,16 +1,22 @@
-// src/App.tsx
+import { FC } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Clients from './pages/Clients';
+import Programs from './pages/Programs';
+import Dashboard from './pages/Dashbosrd';
+import Login from './pages/Login';
 
-import { Routes, Route } from 'react-router-dom'
-import Sidebar from './components/Sidebar'
-
-function App() {
+const App: FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<Sidebar />}>
-        
+      <Route path="/login" element={<Login />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/programs" element={<Programs />} />
       </Route>
     </Routes>
-  )
-}
+  );
+};
 
-export default App
+export default App;
