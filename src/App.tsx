@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -62,7 +61,6 @@ const App = () => {
   };
 
   return (
-    <ThemeProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -79,7 +77,6 @@ const App = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </ThemeProvider>
   );
 };
 
