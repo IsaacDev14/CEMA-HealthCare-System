@@ -1,23 +1,51 @@
 import { FC, FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
-import logo from '../assets/logo.png';
-import image from '../assets/image copy.png';
+import logo from '../assets/logo.png'; // Reuse logo from Login.tsx
+import image from '../assets/image copy.png'; // Reuse background image from Login.tsx
 
-const Login: FC = () => {
+const Signup: FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string>('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (username === '' || password === '') {
-      setError('Please fill in both fields');
+    setError('');
+
+    // Client-side validation
+    if (!username || !password || !confirmPassword) {
+      setError('Please fill in all fields');
       return;
     }
-    // Placeholder: Redirect to dashboard (no authentication yet)
-    navigate('/');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      // Placeholder API call for registration
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Registration failed');
+      }
+
+      // On success, redirect to login page
+      navigate('/login');
+    } catch (err) {
+      setError('Failed to register. Please try again.');
+    }
   };
 
   return (
@@ -25,10 +53,10 @@ const Login: FC = () => {
       <div className="flex w-full max-w-screen-xl">
         {/* Left Section: Image */}
         <div className="w-1/2 hidden lg:block">
-          <img src={image} alt="Login Background" className="w-full h-full object-cover rounded-l-lg" />
+          <img src={image} alt="Signup Background" className="w-full h-full object-cover rounded-l-lg" />
         </div>
 
-        {/* Right Section: Login Form */}
+        {/* Right Section: Signup Form */}
         <div className="w-full lg:w-1/2 p-8 bg-white rounded-r-lg shadow-xl flex flex-col items-center justify-center transform transition-all duration-500 hover:scale-102">
           {/* Logo */}
           <div className="flex justify-center mb-8">
@@ -37,23 +65,23 @@ const Login: FC = () => {
 
           {/* Header */}
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-3">
-            Welcome Back to CEMA
+            Join CEMA
           </h2>
 
           {/* Subheading */}
           <h3 className="text-lg text-gray-600 text-center mb-4">
-            Please log in to continue managing your health programs.
+            Create an account to manage health programs.
           </h3>
 
           {/* Error Alert */}
           {error && (
-            <div className="flex items-center justify-start mb-4 p-2 bg-red-100 text-red-600 rounded-lg shadow-md">
+            <div className="flex items-center justify-start mb-4 p-2 bg-red-100 text-red-600 rounded-lg shadow-md w-full">
               <FiAlertCircle className="mr-2" size={20} />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Login Form */}
+          {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-6 w-full">
             {/* Username Input */}
             <div className="flex items-center border border-gray-300 rounded-md p-2 transition-transform duration-300 focus-within:ring-4 focus-within:ring-blue-500 hover:scale-105">
@@ -83,24 +111,38 @@ const Login: FC = () => {
               />
             </div>
 
+            {/* Confirm Password Input */}
+            <div className="flex items-center border border-gray-300 rounded-md p-2 transition-transform duration-300 focus-within:ring-4 focus-within:ring-blue-500 hover:scale-105">
+              <FiLock className="text-gray-600 mr-3" size={20} />
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                className="w-full p-2 outline-none bg-transparent text-gray-700"
+                aria-required="true"
+              />
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
               className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105 flex items-center justify-center"
             >
-              <span className="mr-2">Login</span>
-              <FiLock size={20} />
+              <span className="mr-2">Sign Up</span>
+              <FiUser size={20} />
             </button>
           </form>
 
-          {/* Link to Signup */}
+          {/* Link to Login */}
           <p className="text-sm text-gray-600 text-center mt-4">
-            Don’t have an account?{' '}
+            Already have an account?{' '}
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/login')}
               className="text-blue-600 hover:underline"
             >
-              Sign up
+              Log in
             </button>
           </p>
 
@@ -114,4 +156,4 @@ const Login: FC = () => {
   );
 };
 
-export default Login;
+export default Signup;

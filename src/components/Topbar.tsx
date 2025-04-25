@@ -10,10 +10,20 @@ interface TopbarProps {
 const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // Manage search input
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Placeholder for token clearing
+    localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Navigate or filter based on search term
+      console.log('Searching for:', searchTerm);
+      // Example: navigate(`/clients/search?query=${encodeURIComponent(searchTerm)}`);
+    }
   };
 
   return (
@@ -22,7 +32,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         isSidebarOpen ? 'lg:left-64' : 'lg:left-60'
       }`}
     >
-      {/* Left: Title and Toggle Button */}
+      {/* Left Section: Sidebar toggle and title */}
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
@@ -34,23 +44,23 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         <h2 className="text-xl font-semibold text-gray-800 hidden md:block">CEMA Health System</h2>
       </div>
 
-      {/* Center: Search Bar */}
-      <div className="flex-1 max-w-md mx-4">
+      {/* Center Section: Search bar */}
+      <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4">
         <div className="relative">
           <input
             type="text"
             placeholder="Search clients..."
-            className="w-full p-2 pl-10 border rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            className="w-full p-2 pl-10 border rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
             aria-label="Search clients"
-            disabled // Placeholder for future functionality
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
         </div>
-      </div>
+      </form>
 
-      {/* Right: User Actions */}
+      {/* Right Section: Notification & User Profile */}
       <div className="flex items-center gap-4">
-        {/* Notifications */}
         <button
           className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors"
           aria-label="View notifications"
@@ -58,7 +68,6 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           <FiBell className="w-5 h-5" />
         </button>
 
-        {/* User Profile */}
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -72,6 +81,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             <span className="text-sm font-medium text-gray-700 hidden lg:block">Dr. John Doe</span>
             <FiChevronDown className="w-4 h-4 text-gray-600" />
           </button>
+
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100">
               <button

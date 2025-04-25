@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
+import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import Signup from './pages/Signup'; // Import Signup from pages
 import Clients from './pages/Clients';
 import Programs from './pages/Programs';
 import Suggestions from './pages/Suggestions';
@@ -65,6 +66,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} /> {/* Add Signup route */}
           <Route element={<Layout />}>
             <Route
               path="/"
