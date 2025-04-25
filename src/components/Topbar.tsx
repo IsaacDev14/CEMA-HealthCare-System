@@ -18,7 +18,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 bg-white shadow-sm p-4 flex items-center justify-between z-20 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 bg-gray-300 shadow-sm p-4 flex items-center justify-between z-20 transition-all duration-300 ${
         isSidebarOpen ? 'lg:left-64' : 'lg:left-60'
       }`}
     >
@@ -31,7 +31,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         >
           {isSidebarOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
         </button>
-        <h2 className="text-xl font-semibold text-gray-800 hidden md:block">CEMACare Health System</h2>
+        <h2 className="text-xl font-semibold text-gray-800 hidden md:block">CEMA Health System</h2>
       </div>
 
       {/* Center: Search Bar */}
