@@ -11,6 +11,7 @@ interface Client {
   email: string;
   dateOfBirth: string;
   registeredAt: string;
+  programIds: string[];
 }
 
 interface Program {
@@ -21,7 +22,7 @@ interface Program {
 }
 
 interface DashboardProps {
-  addClient: (client: Omit<Client, 'id' | 'registeredAt'>) => void;
+  addClient: (client: Omit<Client, 'id' | 'registeredAt' | 'programIds'>) => void;
   addProgram: (program: Omit<Program, 'id' | 'createdAt'>) => void;
   clients: Client[];
   programs: Program[];
@@ -87,7 +88,7 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
   // Calculate summary metrics
   const totalPrograms = programs.length;
   const totalClients = clients.length;
-  const pendingActions = clients.filter((client) => new Date(client.dateOfBirth) > new Date()).length; // Mock logic
+  const pendingActions = clients.filter((client) => client.programIds.length > 0).length; // Clients enrolled in programs
 
   // Aggregate chart data
   const chartData = aggregateChartData(clients, programs);

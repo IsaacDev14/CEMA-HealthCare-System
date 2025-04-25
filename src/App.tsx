@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Clients from './pages/Clients';
 import Programs from './pages/Programs';
 import Suggestions from './pages/Suggestions';
 import Feedback from './pages/Feedback';
-import Dashboard from './pages/Dashbosrd';
-import Clients from './pages/Clients';
+import Dashboard from './pages/Dashboard';
 
 // Types for Client and Program
 interface Client {
@@ -15,21 +15,22 @@ interface Client {
   lastName: string;
   email: string;
   dateOfBirth: string;
-  registeredAt: string; // Added for chart data
+  registeredAt: string;
+  programIds: string[]; // Added to track enrolled programs
 }
 
 interface Program {
   id: string;
   name: string;
   description: string;
-  createdAt: string; // Added for chart data
+  createdAt: string;
 }
 
 const App = () => {
   // State for clients
   const [clients, setClients] = useState<Client[]>([
-    { id: '1', firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', dateOfBirth: '1978-05-15', registeredAt: '2025-01-15' },
-    { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', dateOfBirth: '1992-08-22', registeredAt: '2025-02-10' },
+    { id: '1', firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', dateOfBirth: '1978-05-15', registeredAt: '2025-01-15', programIds: ['1'] }, // Enrolled in Diabetes Management
+    { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', dateOfBirth: '1992-08-22', registeredAt: '2025-02-10', programIds: ['2'] }, // Enrolled in Hypertension Care
   ]);
 
   // State for programs
@@ -39,11 +40,12 @@ const App = () => {
   ]);
 
   // Functions to add new clients and programs
-  const addClient = (client: Omit<Client, 'id' | 'registeredAt'>) => {
+  const addClient = (client: Omit<Client, 'id' | 'registeredAt' | 'programIds'>) => {
     const newClient: Client = { 
       ...client, 
       id: (clients.length + 1).toString(), 
-      registeredAt: new Date().toISOString().split('T')[0] // Current date as registration date
+      registeredAt: new Date().toISOString().split('T')[0],
+      programIds: [], // New clients start with no programs
     };
     setClients((prev) => [...prev, newClient]);
   };
@@ -52,7 +54,7 @@ const App = () => {
     const newProgram: Program = { 
       ...program, 
       id: (programs.length + 1).toString(), 
-      createdAt: new Date().toISOString().split('T')[0] // Current date as creation date
+      createdAt: new Date().toISOString().split('T')[0],
     };
     setPrograms((prev) => [...prev, newProgram]);
   };
@@ -66,7 +68,7 @@ const App = () => {
             path="/"
             element={<Dashboard addClient={addClient} addProgram={addProgram} clients={clients} programs={programs} />}
           />
-          <Route path="/clients" element={<Clients clients={clients} setClients={setClients} />} />
+          <Route path="/clients" element={<Clients clients={clients} setClients={setClients} programs={programs} />} />
           <Route path="/programs" element={<Programs programs={programs} setPrograms={setPrograms} />} />
           <Route path="/suggestions" element={<Suggestions />} />
           <Route path="/feedback" element={<Feedback />} />
