@@ -1,90 +1,168 @@
-// src/pages/Programs.tsx
-import { FC, useState } from 'react'
-import { FiPlusCircle, FiStethoscope, FiActivity, FiHeart, FiAlertTriangle } from 'react-icons/fi'
+import { FC, useState, ChangeEvent } from 'react';
+import { FiSearch, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { ToastContainer, toast } from 'react-toastify';
 
+// Types for Program
 interface Program {
-  id: number
-  name: string
-  description: string
-  icon: JSX.Element
+  id: string;
+  name: string;
+  description: string;
+  enrollmentCount: number;
+  status: 'Active' | 'Inactive';
 }
 
-const defaultPrograms: Program[] = [
-  { id: 1, name: 'Tuberculosis', description: 'National TB Control Program', icon: <FiStethoscope className="text-red-600" /> },
-  { id: 2, name: 'HIV/AIDS', description: 'Care and treatment program', icon: <FiHeart className="text-pink-500" /> },
-  { id: 3, name: 'Malaria', description: 'Mosquito-borne disease program', icon: <FiAlertTriangle className="text-green-600" /> },
-]
-
 const Programs: FC = () => {
-  const [programs, setPrograms] = useState<Program[]>(defaultPrograms)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  // Mock data for programs (replace with real data from backend later)
+  const [programs, setPrograms] = useState<Program[]>([
+    { id: '1', name: 'Malaria', description: 'Malaria prevention program', enrollmentCount: 120, status: 'Active' },
+    { id: '2', name: 'HIV/AIDS', description: 'HIV/AIDS awareness campaign', enrollmentCount: 85, status: 'Active' },
+    { id: '3', name: 'Tuberculosis', description: 'TB treatment initiative', enrollmentCount: 45, status: 'Inactive' },
+    { id: '4', name: 'Vaccination Drive', description: 'Childhood vaccination program', enrollmentCount: 200, status: 'Active' },
+  ]);
 
-  const handleAddProgram = () => {
-    if (!name || !description) return
-    const newProgram: Program = {
-      id: programs.length + 1,
-      name,
-      description,
-      icon: <FiActivity className="text-blue-500" />,
-    }
-    setPrograms([...programs, newProgram])
-    setName('')
-    setDescription('')
-  }
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+
+  // Filter programs based on search term and status
+  const filteredPrograms = programs.filter((program) => {
+    const matchesSearch = program.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || program.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleStatusFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleEdit = (id: string) => {
+    // Placeholder for edit functionality
+    toast.info(`Edit program with ID: ${id}`, { position: 'top-right' });
+  };
+
+  const handleDelete = (id: string) => {
+    // Placeholder for delete functionality
+    setPrograms(programs.filter((program) => program.id !== id));
+    toast.success('Program deleted successfully!', { position: 'top-right' });
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold flex items-center gap-2 text-blue-800">
-          <FiStethoscope className="text-4xl" />
-          Health Programs
-        </h2>
-      </div>
+      {/* Toast Container */}
+      <ToastContainer />
 
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Create New Program</h3>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <input
-            type="text"
-            placeholder="Program name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border border-gray-300 rounded-md px-4 py-2 flex-1"
-          />
-          <input
-            type="text"
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="border border-gray-300 rounded-md px-4 py-2 flex-1"
-          />
-          <button
-            onClick={handleAddProgram}
-            className="bg-blue-700 text-white px-5 py-2 rounded-md flex items-center gap-2 hover:bg-blue-800 transition"
+      <h2 className="text-2xl font-semibold text-gray-800">Health Programs</h2>
+
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search programs by name..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 text-gray-600 placeholder-gray-400"
+              aria-label="Search programs"
+            />
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          </div>
+        </div>
+        <div className="w-full sm:w-48">
+          <select
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 text-gray-600"
+            aria-label="Filter by status"
           >
-            <FiPlusCircle />
-            Add
-          </button>
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {programs.map((program) => (
-          <div
-            key={program.id}
-            className="bg-white p-5 rounded-lg shadow-md border border-blue-100 flex flex-col gap-2"
-          >
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">{program.icon}</div>
-              <h4 className="text-lg font-semibold">{program.name}</h4>
-            </div>
-            <p className="text-gray-600">{program.description}</p>
-          </div>
-        ))}
+      {/* Programs Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Enrollments
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredPrograms.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    No programs found.
+                  </td>
+                </tr>
+              ) : (
+                filteredPrograms.map((program) => (
+                  <tr key={program.id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {program.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{program.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {program.enrollmentCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          program.status === 'Active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {program.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(program.id)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                          aria-label={`Edit ${program.name}`}
+                        >
+                          <FiEdit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(program.id)}
+                          className="text-red-600 hover:text-red-800 transition-colors duration-200"
+                          aria-label={`Delete ${program.name}`}
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Programs
+export default Programs;
