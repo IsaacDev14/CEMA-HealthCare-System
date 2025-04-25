@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiLayers, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUsers, FiLayers, FiLogOut, FiMessageSquare, FiHeart } from 'react-icons/fi';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -14,6 +14,8 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
     { to: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" />, ariaLabel: 'Go to Dashboard', isPlaceholder: false },
     { to: '/clients', label: 'Clients', icon: <FiUsers className="w-5 h-5" />, ariaLabel: 'View Clients', isPlaceholder: true },
     { to: '/programs', label: 'Programs', icon: <FiLayers className="w-5 h-5" />, ariaLabel: 'Manage Programs', isPlaceholder: true },
+    { to: '/suggestions', label: 'Suggestions', icon: <FiMessageSquare className="w-5 h-5" />, ariaLabel: 'View Suggestions', isPlaceholder: true },
+    { to: '/feedback', label: 'Feedback', icon: <FiHeart className="w-5 h-5" />, ariaLabel: 'Provide Feedback', isPlaceholder: true },
   ];
 
   const handleLogout = () => {
