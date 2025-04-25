@@ -25,13 +25,19 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col transition-transform duration-300 transform ${
+      className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col transition-transform duration-300 transform h-screen ${
         isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'
-      } lg:static lg:translate-x-0 lg:w-64 z-30`}
+      } z-30`}
     >
-      {/* Logo/Title */}
-      <div className="px-6 py-6 border-b border-blue-700">
-        <h1 className="text-2xl font-bold tracking-tight">CEMACare</h1>
+      {/* Logo */}
+      <div className="px-6 py-6 border-b border-blue-700 flex items-center">
+        <Link to="/" aria-label="Go to Dashboard">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1057/1057161.png"
+            alt="CEMACare Logo"
+            className="w-10 h-10"
+          />
+        </Link>
       </div>
 
       {/* Navigation */}
