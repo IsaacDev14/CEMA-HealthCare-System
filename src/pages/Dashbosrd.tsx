@@ -67,6 +67,33 @@ const Dashboard: FC = () => {
   return (
     <div className="space-y-10">
       <ToastContainer />
+       {/* === Page Title === */}
+       <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+
+      {/* === Summary Metrics === */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
+          <FiLayers className="w-8 h-8 text-blue-600" />
+          <div>
+            <p className="text-sm text-gray-500">Total Programs</p>
+            <p className="text-xl font-bold text-gray-800">12</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
+          <FiUsers className="w-8 h-8 text-blue-600" />
+          <div>
+            <p className="text-sm text-gray-500">Total Clients</p>
+            <p className="text-xl font-bold text-gray-800">245</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
+          <FiAlertCircle className="w-8 h-8 text-blue-600" />
+          <div>
+            <p className="text-sm text-gray-500">Pending Actions</p>
+            <p className="text-xl font-bold text-gray-800">3</p>
+          </div>
+        </div>
+      </div>
 
       {/* === Enhanced Form Section (Now at the Top) === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -142,30 +169,7 @@ const Dashboard: FC = () => {
         </div>
       </div>
 
-      {/* === Summary Metrics === */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
-          <FiLayers className="w-8 h-8 text-blue-600" />
-          <div>
-            <p className="text-sm text-gray-500">Total Programs</p>
-            <p className="text-xl font-bold text-gray-800">12</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
-          <FiUsers className="w-8 h-8 text-blue-600" />
-          <div>
-            <p className="text-sm text-gray-500">Total Clients</p>
-            <p className="text-xl font-bold text-gray-800">245</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
-          <FiAlertCircle className="w-8 h-8 text-blue-600" />
-          <div>
-            <p className="text-sm text-gray-500">Pending Actions</p>
-            <p className="text-xl font-bold text-gray-800">3</p>
-          </div>
-        </div>
-      </div>
+      
 
       {/* === Charts Section === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
