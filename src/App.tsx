@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Clients from './pages/Clients';
 import Programs from './pages/Programs';
 import Suggestions from './pages/Suggestions';
 import Feedback from './pages/Feedback';
-import Dashboard from './pages/Dashboard';
 
 // Types for Client and Program
 interface Client {
@@ -16,7 +17,7 @@ interface Client {
   email: string;
   dateOfBirth: string;
   registeredAt: string;
-  programIds: string[]; // Added to track enrolled programs
+  programIds: string[];
 }
 
 interface Program {
@@ -29,8 +30,8 @@ interface Program {
 const App = () => {
   // State for clients
   const [clients, setClients] = useState<Client[]>([
-    { id: '1', firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', dateOfBirth: '1978-05-15', registeredAt: '2025-01-15', programIds: ['1'] }, // Enrolled in Diabetes Management
-    { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', dateOfBirth: '1992-08-22', registeredAt: '2025-02-10', programIds: ['2'] }, // Enrolled in Hypertension Care
+    { id: '1', firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', dateOfBirth: '1978-05-15', registeredAt: '2025-01-15', programIds: ['1'] },
+    { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', dateOfBirth: '1992-08-22', registeredAt: '2025-02-10', programIds: ['2'] },
   ]);
 
   // State for programs
@@ -45,7 +46,7 @@ const App = () => {
       ...client, 
       id: (clients.length + 1).toString(), 
       registeredAt: new Date().toISOString().split('T')[0],
-      programIds: [], // New clients start with no programs
+      programIds: [],
     };
     setClients((prev) => [...prev, newClient]);
   };
@@ -60,21 +61,23 @@ const App = () => {
   };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<Layout />}>
-          <Route
-            path="/"
-            element={<Dashboard addClient={addClient} addProgram={addProgram} clients={clients} programs={programs} />}
-          />
-          <Route path="/clients" element={<Clients clients={clients} setClients={setClients} programs={programs} />} />
-          <Route path="/programs" element={<Programs programs={programs} setPrograms={setPrograms} />} />
-          <Route path="/suggestions" element={<Suggestions />} />
-          <Route path="/feedback" element={<Feedback />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route
+              path="/"
+              element={<Dashboard addClient={addClient} addProgram={addProgram} clients={clients} programs={programs} />}
+            />
+            <Route path="/clients" element={<Clients clients={clients} setClients={setClients} programs={programs} />} />
+            <Route path="/programs" element={<Programs programs={programs} setPrograms={setPrograms} />} />
+            <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/feedback" element={<Feedback />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

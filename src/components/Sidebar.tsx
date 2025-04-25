@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiLayers, FiLogOut, FiMessageSquare, FiHeart } from 'react-icons/fi';
+import { motion } from 'framer-motion'; // Import framer-motion
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,17 +20,19 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Placeholder for token clearing
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col transition-transform duration-300 transform h-screen ${
-        isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'
-      } z-30`}
+    <motion.aside
+      initial={{ x: '-100%' }}
+      animate={{ x: isOpen ? 0 : '-100%' }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col h-screen z-30 ${
+        isOpen ? 'w-64' : 'w-0'
+      }`} // Keep width classes for layout
     >
-      {/* Logo and Title */}
       <div className="px-6 py-6 border-b border-blue-700 flex items-center gap-3">
         <Link to="/" aria-label="Go to Dashboard" className="flex items-center gap-3">
           <img
@@ -37,15 +40,12 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
             alt="CEMACare Logo"
             className="w-8 h-8"
           />
-          <h1
-            className="text-2xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-blue-400"
-          >
+          <h1 className="text-2xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-blue-400">
             CEMACare
           </h1>
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-4 mt-6 overflow-y-auto">
         <ul className="space-y-2">
           {links.map(({ to, label, icon, ariaLabel, isPlaceholder }) => (
@@ -72,7 +72,6 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
         </ul>
       </nav>
 
-      {/* Footer */}
       <div className="px-6 py-4 mt-auto">
         <button
           onClick={handleLogout}
@@ -86,7 +85,7 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
           © {new Date().getFullYear()} CEMACare
         </p>
       </div>
-    </aside>
+    </motion.aside>
   );
 };
 
