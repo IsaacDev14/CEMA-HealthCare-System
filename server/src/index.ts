@@ -24,7 +24,7 @@ app.use('/api/auth', authRoutes);
 async function startServer() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ force: false }); // Set to true during initial development to reset tables
+    await sequelize.sync({ force: false });
     console.log('Database connected');
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
