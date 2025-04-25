@@ -7,6 +7,7 @@ interface Program {
   id: string;
   name: string;
   description: string;
+  createdAt: string; // Added
 }
 
 interface ProgramsProps {

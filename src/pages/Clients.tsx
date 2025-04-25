@@ -9,6 +9,7 @@ interface Client {
   lastName: string;
   email: string;
   dateOfBirth: string;
+  registeredAt: string; // Added
 }
 
 interface ClientsProps {

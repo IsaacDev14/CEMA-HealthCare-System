@@ -10,17 +10,21 @@ interface Client {
   lastName: string;
   email: string;
   dateOfBirth: string;
+  registeredAt: string;
 }
 
 interface Program {
   id: string;
   name: string;
   description: string;
+  createdAt: string;
 }
 
 interface DashboardProps {
-  addClient: (client: Omit<Client, 'id'>) => void;
-  addProgram: (program: Omit<Program, 'id'>) => void;
+  addClient: (client: Omit<Client, 'id' | 'registeredAt'>) => void;
+  addProgram: (program: Omit<Program, 'id' | 'createdAt'>) => void;
+  clients: Client[];
+  programs: Program[];
 }
 
 // Types for form data
@@ -36,21 +40,57 @@ interface ClientForm {
   dateOfBirth: string;
 }
 
-// Sample chart data
-const chartData = [
-  { month: 'Jan', enrollments: 30, clients: 40 },
-  { month: 'Feb', enrollments: 45, clients: 60 },
-  { month: 'Mar', enrollments: 60, clients: 75 },
-  { month: 'Apr', enrollments: 50, clients: 65 },
-  { month: 'May', enrollments: 70, clients: 80 },
-  { month: 'Jun', enrollments: 90, clients: 95 },
-];
+// Helper to get month name from date string
+const getMonthName = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString('default', { month: 'short' });
+};
 
-const Dashboard: FC<DashboardProps> = ({ addClient, addProgram }) => {
+// Aggregate data for charts
+const aggregateChartData = (clients: Client[], programs: Program[]) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Initialize chart data for the last 6 months
+  const chartData: { month: string; enrollments: number; clients: number }[] = months.slice(0, 6).map((month) => ({
+    month,
+    enrollments: 0,
+    clients: 0,
+  }));
+
+  // Aggregate programs by creation month
+  programs.forEach((program) => {
+    const monthName = getMonthName(program.createdAt);
+    const index = chartData.findIndex((data) => data.month === monthName);
+    if (index !== -1) {
+      chartData[index].enrollments += 1; // Increment enrollments for that month
+    }
+  });
+
+  // Aggregate clients by registration month
+  clients.forEach((client) => {
+    const monthName = getMonthName(client.registeredAt);
+    const index = chartData.findIndex((data) => data.month === monthName);
+    if (index !== -1) {
+      chartData[index].clients += 1; // Increment clients for that month
+    }
+  });
+
+  return chartData;
+};
+
+const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, programs }) => {
   // State to hold form data and errors
   const [programForm, setProgramForm] = useState<ProgramForm>({ name: '', description: '' });
   const [clientForm, setClientForm] = useState<ClientForm>({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Calculate summary metrics
+  const totalPrograms = programs.length;
+  const totalClients = clients.length;
+  const pendingActions = clients.filter((client) => new Date(client.dateOfBirth) > new Date()).length; // Mock logic
+
+  // Aggregate chart data
+  const chartData = aggregateChartData(clients, programs);
 
   // Handle Program form submission
   const handleProgramSubmit = (e: FormEvent) => {
@@ -127,21 +167,21 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram }) => {
           <FiLayers className="w-8 h-8 text-blue-600" />
           <div>
             <p className="text-sm text-gray-500">Total Programs</p>
-            <p className="text-xl font-bold text-gray-800">12</p>
+            <p className="text-xl font-bold text-gray-800">{totalPrograms}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
           <FiUsers className="w-8 h-8 text-blue-600" />
           <div>
             <p className="text-sm text-gray-500">Total Clients</p>
-            <p className="text-xl font-bold text-gray-800">245</p>
+            <p className="text-xl font-bold text-gray-800">{totalClients}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
           <FiAlertCircle className="w-8 h-8 text-blue-600" />
           <div>
             <p className="text-sm text-gray-500">Pending Actions</p>
-            <p className="text-xl font-bold text-gray-800">3</p>
+            <p className="text-xl font-bold text-gray-800">{pendingActions}</p>
           </div>
         </div>
       </div>
@@ -200,7 +240,7 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram }) => {
                 <input
                   id={field}
                   type={field === 'email' ? 'email' : 'text'}
-                  value={clientForm[field]} // Removed `as any`
+                  value={clientForm[field]}
                   onChange={(e) => setClientForm({ ...clientForm, [field]: e.target.value })}
                   placeholder={field === 'email' ? 'Email address' : `Enter ${field}`}
                   className={`w-full mt-1 p-3 rounded-lg border ${errors[field] ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500`}
@@ -238,7 +278,7 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Line Chart for Enrollments */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">📈 Enrollment Trend</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">📈 Program Creation Trend</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
