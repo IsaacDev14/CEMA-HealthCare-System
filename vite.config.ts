@@ -9,4 +9,7 @@ export default defineConfig({
     host: '0.0.0.0',  // Bind to all network interfaces
     port: 4173,        // Ensure this is the correct port
   },
+  preview: {
+    allowedHosts: ['cema-healthcare-system-1.onrender.com']  // Add your host here
+  }
 })
