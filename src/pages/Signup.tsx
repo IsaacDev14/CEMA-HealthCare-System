@@ -24,38 +24,54 @@ const Signup: FC = () => {
     setError('');
     setIsLoading(true);
 
+    // Client-side validation
     if (!username || !password || !confirmPassword) {
       setError('Please fill in all fields');
-      toast.error('Please fill in all fields', { position: 'top-right' });
+      toast.error('Please fill in all fields', { position: 'top-right', autoClose: 3000 });
       setIsLoading(false);
       return;
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      toast.error('Passwords do not match', { position: 'top-right' });
+      toast.error('Passwords do not match', { position: 'top-right', autoClose: 3000 });
       setIsLoading(false);
       return;
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
-      toast.error('Password must be at least 6 characters', { position: 'top-right' });
+      toast.error('Password must be at least 6 characters', { position: 'top-right', autoClose: 3000 });
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      // Make API call to register
+      await axios.post('http://localhost:5000/api/auth/register', {
         username,
         password,
       });
-      localStorage.setItem('token', response.data.token);
-      toast.success('Registration successful! Redirecting to login...', { position: 'top-right' });
-      setTimeout(() => navigate('/login'), 2000);
+
+      // Clear form fields
+      setUsername('');
+      setPassword('');
+      setConfirmPassword('');
+      setError('');
+
+      // Show success toast
+      toast.success('Signup successful!', {
+        position: 'top-right',
+        autoClose: 1500,
+        theme: 'colored',
+      });
+
+      // Immediately redirect to login page
+      navigate('/login');
     } catch (err) {
+      // Handle errors
       const errorMessage =
         (err as AxiosError<ErrorResponse>).response?.data?.error || 'An unexpected error occurred';
       setError(errorMessage);
-      toast.error(errorMessage, { position: 'top-right' });
+      toast.error(errorMessage, { position: 'top-right', autoClose: 3000 });
     } finally {
       setIsLoading(false);
     }

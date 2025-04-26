@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -25,12 +26,17 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/suggestions" element={<Suggestions />} />
-          <Route path="/feedback" element={<Feedback />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/feedback" element={<Feedback />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

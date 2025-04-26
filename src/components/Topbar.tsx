@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { FiBell, FiChevronDown, FiMenu, FiSearch, FiX } from 'react-icons/fi';
+import { FiBell, FiChevronDown, FiMenu, FiX, FiSearch } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 interface TopbarProps {
@@ -10,7 +10,7 @@ interface TopbarProps {
 const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // Manage search input
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -20,9 +20,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Navigate or filter based on search term
       console.log('Searching for:', searchTerm);
-      // Example: navigate(`/clients/search?query=${encodeURIComponent(searchTerm)}`);
     }
   };
 
@@ -32,7 +30,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         isSidebarOpen ? 'lg:left-64' : 'lg:left-60'
       }`}
     >
-      {/* Left Section: Sidebar toggle and title */}
+      {/* Left Section */}
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
@@ -41,10 +39,12 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         >
           {isSidebarOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
         </button>
-        <h2 className="text-xl font-semibold text-gray-800 hidden md:block">CEMA Health System</h2>
+        <h2 className="text-xl font-semibold text-gray-800 hidden md:block">
+          CEMA Health System
+        </h2>
       </div>
 
-      {/* Center Section: Search bar */}
+      {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4">
         <div className="relative">
           <input
@@ -59,7 +59,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         </div>
       </form>
 
-      {/* Right Section: Notification & User Profile */}
+      {/* Right Section */}
       <div className="flex items-center gap-4">
         <button
           className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -68,6 +68,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           <FiBell className="w-5 h-5" />
         </button>
 
+        {/* User Dropdown */}
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -78,7 +79,9 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
               JD
             </div>
-            <span className="text-sm font-medium text-gray-700 hidden lg:block">Dr. John Doe</span>
+            <span className="text-sm font-medium text-gray-700 hidden lg:block">
+              Dr. John Doe
+            </span>
             <FiChevronDown className="w-4 h-4 text-gray-600" />
           </button>
 

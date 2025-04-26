@@ -8,23 +8,17 @@ ClientProgram.init(
     clientId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      references: {
-        model: 'Clients',
-        key: 'id',
-      },
     },
     programId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      references: {
-        model: 'Programs',
-        key: 'id',
-      },
     },
   },
   {
     sequelize,
     modelName: 'ClientProgram',
+    tableName: 'ClientPrograms',
+    timestamps: true,
   }
 );
 

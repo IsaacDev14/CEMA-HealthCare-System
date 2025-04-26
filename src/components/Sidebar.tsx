@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiLayers, FiLogOut, FiMessageSquare, FiHeart } from 'react-icons/fi';
-import { motion } from 'framer-motion'; // Import framer-motion
+import { motion } from 'framer-motion';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
   const navigate = useNavigate();
 
   const links = [
-    { to: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" />, ariaLabel: 'Go to Dashboard', isPlaceholder: false },
+    { to: '/dashboard', label: 'Dashboard', icon: <FiHome className="w-5 h-5" />, ariaLabel: 'Go to Dashboard', isPlaceholder: false },
     { to: '/clients', label: 'Clients', icon: <FiUsers className="w-5 h-5" />, ariaLabel: 'View Clients', isPlaceholder: false },
     { to: '/programs', label: 'Programs', icon: <FiLayers className="w-5 h-5" />, ariaLabel: 'Manage Programs', isPlaceholder: false },
     { to: '/suggestions', label: 'Suggestions', icon: <FiMessageSquare className="w-5 h-5" />, ariaLabel: 'View Suggestions', isPlaceholder: false },
@@ -31,7 +31,7 @@ const Sidebar: FC<SidebarProps> = ({ isOpen }) => {
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className={`fixed inset-y-0 left-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-xl flex flex-col h-screen z-30 ${
         isOpen ? 'w-64' : 'w-0'
-      }`} // Keep width classes for layout
+      }`}
     >
       <div className="px-6 py-6 border-b border-blue-700 flex items-center gap-3">
         <Link to="/" aria-label="Go to Dashboard" className="flex items-center gap-3">

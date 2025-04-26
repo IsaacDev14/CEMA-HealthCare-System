@@ -16,12 +16,7 @@ Program.init(
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    createdAt: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      allowNull: true,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -31,7 +26,10 @@ Program.init(
   {
     sequelize,
     modelName: 'Program',
+    tableName: 'Programs',
+    timestamps: true,
   }
 );
 
 module.exports = Program;
+ 

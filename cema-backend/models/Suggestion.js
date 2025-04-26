@@ -35,6 +35,8 @@ Suggestion.init(
   {
     sequelize,
     modelName: 'Suggestion',
+    tableName: 'Suggestions',
+    timestamps: true,
   }
 );
 

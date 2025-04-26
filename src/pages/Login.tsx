@@ -1,30 +1,32 @@
-// ✅ Imports at very top
-import { FC, useState } from 'react';
+import { FC, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiAlertCircle, FiLoader } from 'react-icons/fi';
 import { ToastContainer, toast } from 'react-toastify';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import logo from '../assets/logo.png';
 import image from '../assets/image copy.png';
 
-// ✅ Component starts AFTER imports
+interface ErrorResponse {
+  error?: string;
+}
+
 const Login: FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     if (!username || !password) {
-      setIsLoading(false);
       setError('Please fill in both fields');
-      toast.error('Please fill in both fields', { position: 'top-right' });
+      toast.error('Please fill in both fields', { position: 'top-right', autoClose: 3000 });
+      setIsLoading(false);
       return;
     }
 
@@ -35,16 +37,14 @@ const Login: FC = () => {
       });
 
       localStorage.setItem('token', response.data.token);
-      toast.success('Login successful! Redirecting...', { position: 'top-right' });
-      setTimeout(() => navigate('/'), 2000);
+      toast.success('Login successful!', { position: 'top-right', autoClose: 3000, theme: 'colored' });
+
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
       const errorMessage =
-        axios.isAxiosError(err) && err.response
-          ? err.response.data.error || 'An unexpected error occurred'
-          : 'An unexpected error occurred';
-
+        (err as AxiosError<ErrorResponse>).response?.data?.error || 'An unexpected error occurred';
       setError(errorMessage);
-      toast.error(errorMessage, { position: 'top-right' });
+      toast.error(errorMessage, { position: 'top-right', autoClose: 3000 });
     } finally {
       setIsLoading(false);
     }

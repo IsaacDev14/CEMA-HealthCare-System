@@ -1,4 +1,5 @@
 import { FC, FormEvent, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiAlertCircle, FiUsers, FiLayers } from 'react-icons/fi';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
@@ -71,11 +72,18 @@ const Dashboard: FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [clients, setClients] = useState<Client[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Please log in to access the dashboard.', { autoClose: 3000 });
+          navigate('/login');
+          return;
+        }
+
         const [clientsRes, programsRes] = await Promise.all([
           axios.get('http://localhost:5000/api/clients', {
             headers: { Authorization: `Bearer ${token}` },
@@ -88,14 +96,19 @@ const Dashboard: FC = () => {
         setClients(clientsRes.data);
         setPrograms(programsRes.data);
       } catch (error) {
-        const errorMessage =
-          (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error fetching data';
+        const axiosError = error as AxiosError<ErrorResponse>;
+        const errorMessage = axiosError.response?.data?.error || 'Error fetching data';
         toast.error(errorMessage, { autoClose: 3000 });
+        if (axiosError.response?.status === 401) {
+          toast.error('Session expired. Please log in again.', { autoClose: 3000 });
+          localStorage.removeItem('token');
+          navigate('/login');
+        }
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   const totalPrograms = programs.length;
   const totalClients = clients.length;
@@ -116,6 +129,12 @@ const Dashboard: FC = () => {
 
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to create a program.', { autoClose: 3000 });
+        navigate('/login');
+        return;
+      }
+
       const response = await axios.post(
         'http://localhost:5000/api/programs',
         { name: programForm.name, description: programForm.description },
@@ -126,9 +145,14 @@ const Dashboard: FC = () => {
       setErrors({});
       toast.success('Program created successfully!', { autoClose: 3000, theme: 'colored' });
     } catch (error) {
-      const errorMessage =
-        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error creating program';
+      const axiosError = error as AxiosError<ErrorResponse>;
+      const errorMessage = axiosError.response?.data?.error || 'Error creating program';
       toast.error(errorMessage, { autoClose: 3000 });
+      if (axiosError.response?.status === 401) {
+        toast.error('Session expired. Please log in again.', { autoClose: 3000 });
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
     }
   };
 
@@ -154,6 +178,12 @@ const Dashboard: FC = () => {
 
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to register a client.', { autoClose: 3000 });
+        navigate('/login');
+        return;
+      }
+
       const response = await axios.post(
         'http://localhost:5000/api/clients',
         {
@@ -169,9 +199,14 @@ const Dashboard: FC = () => {
       setErrors({});
       toast.success('Client registered successfully!', { autoClose: 3000, theme: 'colored' });
     } catch (error) {
-      const errorMessage =
-        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error registering client';
+      const axiosError = error as AxiosError<ErrorResponse>;
+      const errorMessage = axiosError.response?.data?.error || 'Error registering client';
       toast.error(errorMessage, { autoClose: 3000 });
+      if (axiosError.response?.status === 401) {
+        toast.error('Session expired. Please log in again.', { autoClose: 3000 });
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
     }
   };
 

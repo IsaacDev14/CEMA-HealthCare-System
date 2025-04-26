@@ -40,6 +40,8 @@ Client.init(
   {
     sequelize,
     modelName: 'Client',
+    tableName: 'Clients',
+    timestamps: true,
   }
 );
 
