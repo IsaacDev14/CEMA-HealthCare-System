@@ -31,8 +31,8 @@ router.post('/register', async (req: Request, res: Response) => {
     });
 
     res.status(201).json({ message: 'User registered successfully', userId: user.id });
-  } catch (err) {
-    console.error(err);
+  } catch (err: any) {
+    console.error('Register error:', err.message, err.stack);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -46,25 +46,35 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
+    console.log('Attempting to find user:', username);
     const user = await User.findOne({ where: { username } });
     if (!user) {
+      console.log('User not found:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('Comparing password for user:', username);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET not defined');
+      throw new Error('JWT_SECRET not defined');
+    }
+
+    console.log('Generating JWT for user:', username);
     const token = jwt.sign(
       { userId: user.id, username: user.username },
-      process.env.JWT_SECRET as string,
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.json({ message: 'Login successful', token });
-  } catch (err) {
-    console.error(err);
+  } catch (err: any) {
+    console.error('Login error:', err.message, err.stack);
     res.status(500).json({ error: 'Server error' });
   }
 });
