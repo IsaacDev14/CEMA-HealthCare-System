@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { FiBell, FiChevronDown, FiMenu, FiX, FiSearch } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,9 +11,40 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [username, setUsername] = useState<string | null>('');  // Store username
+  const [isLoading, setIsLoading] = useState(true);  // Loading state
+
+  // Fetch username from the API when component mounts
+  useEffect(() => {
+    const fetchUsername = async () => {
+      try {
+        // Assuming you have a backend endpoint to fetch user data
+        const response = await fetch('/api/user', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,  // Include token in header
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUsername(data.username);  // Set username from the response
+        } else {
+          console.error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoading(false);  // Set loading to false once the API call completes
+      }
+    };
+
+    fetchUsername();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
     navigate('/login');
   };
 
@@ -21,6 +52,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       console.log('Searching for:', searchTerm);
+      // Add logic to search clients and programs
     }
   };
 
@@ -49,9 +81,9 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         <div className="relative">
           <input
             type="text"
-            placeholder="Search clients..."
+            placeholder="Search clients or programs..."
             className="w-full p-2 pl-10 border rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
-            aria-label="Search clients"
+            aria-label="Search clients or programs"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -77,10 +109,10 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             aria-expanded={isDropdownOpen}
           >
             <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
-              JD
+              {username?.charAt(0)} {/* Display the first letter of the username */}
             </div>
             <span className="text-sm font-medium text-gray-700 hidden lg:block">
-              Dr. John Doe
+              {isLoading ? 'Loading...' : username || 'No username available'}
             </span>
             <FiChevronDown className="w-4 h-4 text-gray-600" />
           </button>

@@ -1,7 +1,7 @@
 import { FC, useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { FiSearch, FiTrash2, FiEye } from 'react-icons/fi';
 import { ToastContainer, toast } from 'react-toastify';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Suggestion {
@@ -24,7 +24,6 @@ const Suggestions: FC = () => {
 
   const categories = ['System Improvement', 'Client Care', 'Other'];
 
-  // Fetch suggestions on component mount
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
@@ -33,7 +32,8 @@ const Suggestions: FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSuggestions(response.data);
-      } catch (err) {
+      } catch (error) {
+        const err = error as AxiosError<{ error: string }>;
         toast.error(err.response?.data?.error || 'Error fetching suggestions');
       }
     };
@@ -41,30 +41,25 @@ const Suggestions: FC = () => {
     fetchSuggestions();
   }, []);
 
-  // Filter suggestions based on search term and category
   const filteredSuggestions = suggestions.filter((suggestion) => {
     const matchesSearch = suggestion.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'All' || suggestion.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  // Handle form input changes
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle search input change
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Handle category filter change
   const handleCategoryFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setCategoryFilter(e.target.value);
   };
 
-  // Handle form submission to create a new suggestion
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.title) {
@@ -84,26 +79,26 @@ const Suggestions: FC = () => {
       setSuggestions((prev) => [...prev, response.data]);
       setFormData({ title: '', description: '', category: 'System Improvement' });
       toast.success('Suggestion submitted successfully!');
-    } catch (err) {
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data?.error || 'Error submitting suggestion');
     }
   };
 
-  // Handle view action (placeholder for future implementation)
   const handleView = (id: number) => {
     toast.info(`View suggestion with ID: ${id}`);
   };
 
-  // Handle delete action
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`http://localhost:5000/api/suggestions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuggestions(suggestions.filter((suggestion) => suggestion.id !== id));
+      setSuggestions((prev) => prev.filter((suggestion) => suggestion.id !== id));
       toast.success('Suggestion deleted successfully!');
-    } catch (err) {
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data?.error || 'Error deleting suggestion');
     }
   };
