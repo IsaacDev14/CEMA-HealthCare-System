@@ -1,8 +1,10 @@
 import { FC, FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
-import logo from '../assets/logo.png'; // Reuse logo from Login.tsx
-import image from '../assets/image copy.png'; // Reuse background image from Login.tsx
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import logo from '../assets/logo.png';
+import image from '../assets/image copy.png';
 
 const Signup: FC = () => {
   const navigate = useNavigate();
@@ -18,38 +20,44 @@ const Signup: FC = () => {
     // Client-side validation
     if (!username || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      toast.error('Please fill in all fields', { position: 'top-right' });
       return;
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      toast.error('Passwords do not match', { position: 'top-right' });
       return;
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      toast.error('Password must be at least 6 characters', { position: 'top-right' });
       return;
     }
 
     try {
-      // Placeholder API call for registration
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Registration failed');
+        throw new Error(data.error || 'Registration failed');
       }
 
-      // On success, redirect to login page
-      navigate('/login');
-    } catch (err) {
-      setError('Failed to register. Please try again.');
+      toast.success('Registration successful! Redirecting to login...', { position: 'top-right' });
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message, { position: 'top-right' });
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <ToastContainer />
       <div className="flex w-full max-w-screen-xl">
         {/* Left Section: Image */}
         <div className="w-1/2 hidden lg:block">
