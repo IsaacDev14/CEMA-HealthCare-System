@@ -6,13 +6,16 @@ export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
     host: '0.0.0.0',
-    port: 4173,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
     cors: true,
-    strictPort: true,
+    strictPort: false, // Allow Vite to use another port if 4173 is taken
   },
   preview: {
-    allowedHosts: ['cema-healthcare-system-1.onrender.com'], // Updated
+    host: '0.0.0.0',
+    port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
+    allowedHosts: ['cema-healthcare-system-1.onrender.com'],
     open: true,
+    strictPort: false, // Add this to preview as well
   },
   optimizeDeps: {
     force: true,
