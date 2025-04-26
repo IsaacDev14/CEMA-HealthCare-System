@@ -1,57 +1,63 @@
 import { FC, FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
+import { FiUser, FiLock, FiAlertCircle, FiLoader } from 'react-icons/fi';
 import { ToastContainer, toast } from 'react-toastify';
+import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import logo from '../assets/logo.png';
 import image from '../assets/image copy.png';
+
+interface ErrorResponse {
+  error?: string;
+}
 
 const Signup: FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // Client-side validation
     if (!username || !password || !confirmPassword) {
       setError('Please fill in all fields');
       toast.error('Please fill in all fields', { position: 'top-right' });
+      setIsLoading(false);
       return;
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       toast.error('Passwords do not match', { position: 'top-right' });
+      setIsLoading(false);
       return;
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       toast.error('Password must be at least 6 characters', { position: 'top-right' });
+      setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
+        username,
+        password,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
+      localStorage.setItem('token', response.data.token);
       toast.success('Registration successful! Redirecting to login...', { position: 'top-right' });
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message, { position: 'top-right' });
+    } catch (err) {
+      const errorMessage =
+        (err as AxiosError<ErrorResponse>).response?.data?.error || 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage, { position: 'top-right' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,39 +65,22 @@ const Signup: FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <ToastContainer />
       <div className="flex w-full max-w-screen-xl">
-        {/* Left Section: Image */}
         <div className="w-1/2 hidden lg:block">
           <img src={image} alt="Signup Background" className="w-full h-full object-cover rounded-l-lg" />
         </div>
-
-        {/* Right Section: Signup Form */}
         <div className="w-full lg:w-1/2 p-8 bg-white rounded-r-lg shadow-xl flex flex-col items-center justify-center transform transition-all duration-500 hover:scale-102">
-          {/* Logo */}
           <div className="flex justify-center mb-8">
             <img src={logo} alt="CEMACare Logo" className="h-20" />
           </div>
-
-          {/* Header */}
-          <h2 className="text-3xl font-bold text-gray-800 text-center mb-3">
-            Join CEMA
-          </h2>
-
-          {/* Subheading */}
-          <h3 className="text-lg text-gray-600 text-center mb-4">
-            Create an account to manage health programs.
-          </h3>
-
-          {/* Error Alert */}
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-3">Join CEMA</h2>
+          <h3 className="text-lg text-gray-600 text-center mb-4">Create an account to manage health programs.</h3>
           {error && (
             <div className="flex items-center justify-start mb-4 p-2 bg-red-100 text-red-600 rounded-lg shadow-md w-full">
               <FiAlertCircle className="mr-2" size={20} />
               <span>{error}</span>
             </div>
           )}
-
-          {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-6 w-full">
-            {/* Username Input */}
             <div className="flex items-center border border-gray-300 rounded-md p-2 transition-transform duration-300 focus-within:ring-4 focus-within:ring-blue-500 hover:scale-105">
               <FiUser className="text-gray-600 mr-3" size={20} />
               <input
@@ -104,8 +93,6 @@ const Signup: FC = () => {
                 aria-required="true"
               />
             </div>
-
-            {/* Password Input */}
             <div className="flex items-center border border-gray-300 rounded-md p-2 transition-transform duration-300 focus-within:ring-4 focus-within:ring-blue-500 hover:scale-105">
               <FiLock className="text-gray-600 mr-3" size={20} />
               <input
@@ -118,8 +105,6 @@ const Signup: FC = () => {
                 aria-required="true"
               />
             </div>
-
-            {/* Confirm Password Input */}
             <div className="flex items-center border border-gray-300 rounded-md p-2 transition-transform duration-300 focus-within:ring-4 focus-within:ring-blue-500 hover:scale-105">
               <FiLock className="text-gray-600 mr-3" size={20} />
               <input
@@ -132,29 +117,27 @@ const Signup: FC = () => {
                 aria-required="true"
               />
             </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105 flex items-center justify-center"
             >
-              <span className="mr-2">Sign Up</span>
-              <FiUser size={20} />
+              {isLoading ? (
+                <FiLoader className="animate-spin" size={20} />
+              ) : (
+                <>
+                  <span className="mr-2">Sign Up</span>
+                  <FiUser size={20} />
+                </>
+              )}
             </button>
           </form>
-
-          {/* Link to Login */}
           <p className="text-sm text-gray-600 text-center mt-4">
             Already have an account?{' '}
-            <button
-              onClick={() => navigate('/login')}
-              className="text-blue-600 hover:underline"
-            >
+            <button onClick={() => navigate('/login')} className="text-blue-600 hover:underline">
               Log in
             </button>
           </p>
-
-          {/* Footer */}
           <p className="text-sm text-gray-500 text-center mt-8">
             © {new Date().getFullYear()} CEMA. All rights reserved.
           </p>

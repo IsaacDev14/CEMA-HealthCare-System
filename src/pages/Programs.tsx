@@ -1,336 +1,307 @@
-import { FC, useState, ChangeEvent, FormEvent } from 'react';
-import {
-  FiSearch,
-  FiTrash2,
-  FiEye,
-  FiEdit,
-  FiX,
-  FiAlertCircle
-} from 'react-icons/fi';
-import { ToastContainer, toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion';
-import 'react-toastify/dist/ReactToastify.css';
+import { FC, useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { FiSearch, FiTrash2, FiEye, FiEdit, FiX } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import axios, { AxiosError } from 'axios';
 
-// Program interface to define the structure of each program
 interface Program {
-  id: string;
+  id: number;
   name: string;
   description: string;
   createdAt: string;
 }
 
-interface ProgramsProps {
-  programs: Program[]; // List of programs
-  setPrograms: (programs: Program[]) => void; // Function to update the programs
+interface ErrorResponse {
+  error?: string;
 }
 
-const Programs: FC<ProgramsProps> = ({ programs, setPrograms }) => {
-  const [searchTerm, setSearchTerm] = useState(''); // State for search input
-  const [viewProgram, setViewProgram] = useState<Program | null>(null); // State for viewing a program
-  const [editProgram, setEditProgram] = useState<Program | null>(null); // State for editing a program
-  const [editForm, setEditForm] = useState<Partial<Program>>({}); // State for editing form values
-  const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Validation errors
-  const [currentPage, setCurrentPage] = useState(1); // State for pagination
-  const itemsPerPage = 5; // Programs per page
+const Programs: FC = () => {
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('view');
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Program>>({});
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false);
+  const [deleteProgramId, setDeleteProgramId] = useState<number | null>(null);
 
-  // Filter programs based on search term
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/programs', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setPrograms(response.data);
+      } catch (error) {
+        const errorMessage =
+          (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error fetching programs';
+        toast.error(errorMessage, { autoClose: 3000 });
+      }
+    };
+
+    fetchPrograms();
+  }, []);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleView = (program: Program) => {
+    setSelectedProgram(program);
+    setModalMode('view');
+    setModalOpen(true);
+  };
+
+  const handleEdit = (program: Program) => {
+    setSelectedProgram(program);
+    setEditForm({
+      name: program.name,
+      description: program.description,
+    });
+    setModalMode('edit');
+    setModalOpen(true);
+  };
+
+  const handleDeleteRequest = (id: number) => {
+    setDeleteProgramId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteProgramId) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const program = programs.find((p) => p.id === deleteProgramId);
+      await axios.delete(`http://localhost:5000/api/programs/${deleteProgramId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPrograms(programs.filter((program) => program.id !== deleteProgramId));
+      toast.success(
+        `Program "${program ? program.name : 'Unknown'}" deleted successfully!`,
+        { autoClose: 3000, theme: 'colored' }
+      );
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error deleting program';
+      toast.error(errorMessage, { autoClose: 3000 });
+    } finally {
+      setConfirmDeleteOpen(false);
+      setDeleteProgramId(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmDeleteOpen(false);
+    setDeleteProgramId(null);
+  };
+
+  const handleEditSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedProgram) return;
+
+    const newErrors: { [key: string]: string } = {};
+    if (!editForm.name) newErrors.name = 'Program name is required';
+    if (!editForm.description) newErrors.description = 'Description is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      toast.error('Please correct the errors in the form.', { autoClose: 3000 });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:5000/api/programs/${selectedProgram.id}`,
+        editForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPrograms(programs.map((program) => (program.id === selectedProgram.id ? response.data : program)));
+      setModalOpen(false);
+      setFormErrors({});
+      toast.success(
+        `Program "${editForm.name}" updated successfully!`,
+        { autoClose: 3000, theme: 'colored' }
+      );
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error updating program';
+      toast.error(errorMessage, { autoClose: 3000 });
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedProgram(null);
+    setEditForm({});
+    setFormErrors({});
+  };
+
   const filteredPrograms = programs.filter((program) =>
     program.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
-
-  // Slice the filtered programs for the current page
-  const paginatedPrograms = filteredPrograms.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // Handle the change in search term
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page when search term changes
-  };
-
-  // Set the program to view
-  const handleView = (program: Program) => {
-    setViewProgram(program);
-  };
-
-  // Set the program to edit
-  const handleEdit = (program: Program) => {
-    setEditProgram(program);
-    setEditForm(program); // Pre-fill the form with program data
-  };
-
-  // Handle form submission for editing program
-  const handleEditSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const newErrors: { [key: string]: string } = {}; // Clear errors before validation
-
-    // Validate form inputs
-    if (!editForm.name) newErrors.name = 'Program name is required';
-    if (!editForm.description)
-      newErrors.description = 'Program description is required';
-
-    // If there are validation errors, show a toast message and do not submit
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      toast.error('Please fill in all required fields.', { position: 'top-right' });
-      return;
-    }
-
-    // Update the programs list with the edited program
-    setPrograms(
-      programs.map((p) =>
-        p.id === editProgram!.id ? { ...p, ...editForm } : p
-      )
-    );
-
-    // Show success toast
-    toast.success('Program updated successfully!', { position: 'top-right' });
-
-    // Reset the state
-    setEditProgram(null);
-    setEditForm({});
-    setErrors({});
-  };
-
-  // Handle deletion of a program
-  const handleDelete = (id: string) => {
-    setPrograms(programs.filter((program) => program.id !== id)); // Filter out the deleted program
-    toast.success('Program deleted successfully!', { position: 'top-right' });
-  };
-
   return (
     <div className="space-y-8">
-      {/* Toast notifications */}
-      <ToastContainer />
       <h2 className="text-2xl font-semibold text-gray-800">Programs</h2>
-
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search input */}
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search programs by name..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 placeholder-gray-400"
-              aria-label="Search programs"
-            />
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          </div>
-        </div>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search programs by name..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full p-3 pl-10 border border-gray-300 rounded-lg"
+        />
+        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
-
-      {/* Programs table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {/* Table headers */}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* Animation for rendering the rows */}
-              <AnimatePresence>
-                {paginatedPrograms.length === 0 ? (
-                  <motion.tr
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
-                      No programs found.
+              {filteredPrograms.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">No programs found.</td>
+                </tr>
+              ) : (
+                filteredPrograms.map((program) => (
+                  <tr key={program.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{program.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{program.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(program.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex gap-2">
+                        <button onClick={() => handleView(program)} className="text-blue-600 hover:text-blue-800" title="View">
+                          <FiEye className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleEdit(program)} className="text-green-600 hover:text-green-800" title="Edit">
+                          <FiEdit className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleDeleteRequest(program.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
-                  </motion.tr>
-                ) : (
-                  // Render paginated programs
-                  paginatedPrograms.map((program) => (
-                    <motion.tr
-                      key={program.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {program.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{program.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {/* Actions column with View, Edit, and Delete buttons */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleView(program)}
-                            className="text-blue-600 hover:text-blue-800"
-                            aria-label={`View ${program.name}`}
-                          >
-                            <FiEye className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(program)}
-                            className="text-green-600 hover:text-green-800"
-                            aria-label={`Edit ${program.name}`}
-                          >
-                            <FiEdit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(program.id)}
-                            className="text-red-600 hover:text-red-800"
-                            aria-label={`Delete ${program.name}`}
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </AnimatePresence>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-          >
-            Next
-          </button>
+      {/* View/Edit Modal */}
+      {modalOpen && selectedProgram && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">
+                {modalMode === 'view' ? 'Program Details' : 'Edit Program'}
+              </h3>
+              <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+
+            {modalMode === 'view' ? (
+              <div className="space-y-4">
+                <p><strong>Name:</strong> {selectedProgram.name}</p>
+                <p><strong>Description:</strong> {selectedProgram.description}</p>
+                <p><strong>Created At:</strong> {new Date(selectedProgram.createdAt).toLocaleDateString()}</p>
+                <button
+                  onClick={closeModal}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="text-sm font-medium text-gray-700">Program Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={editForm.name || ''}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className={`w-full p-2 border ${formErrors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
+                  />
+                  {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
+                </div>
+                <div>
+                  <label htmlFor="description" className="text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    id="description"
+                    value={editForm.description || ''}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    className={`w-full p-2 border ${formErrors.description ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
+                    rows={4}
+                  />
+                  {formErrors.description && <p className="text-red-500 text-sm">{formErrors.description}</p>}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       )}
 
-      {/* View Program Modal */}
-      <AnimatePresence>
-        {viewProgram && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">Program Details</h3>
-                <button onClick={() => setViewProgram(null)} className="text-gray-500 hover:text-gray-700">
-                  <FiX className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <p><strong>Name:</strong> {viewProgram.name}</p>
-                <p><strong>Description:</strong> {viewProgram.description}</p>
-                <p><strong>Created At:</strong> {viewProgram.createdAt}</p>
-              </div>
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Confirm Deletion</h3>
+              <button onClick={handleDeleteCancel} className="text-gray-600 hover:text-gray-800">
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete{' '}
+              {programs.find((p) => p.id === deleteProgramId)
+                ? `"${programs.find((p) => p.id === deleteProgramId)!.name}"`
+                : 'this program'}? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
               <button
-                onClick={() => setViewProgram(null)}
-                className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                onClick={handleDeleteConfirm}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
               >
-                Close
+                Confirm
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit Program Modal */}
-      <AnimatePresence>
-        {editProgram && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <motion.form
-              onSubmit={handleEditSubmit}
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg p-6 w-full max-w-md space-y-4"
-            >
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-800">Edit Program</h3>
-                <button onClick={() => setEditProgram(null)} type="button" className="text-gray-500 hover:text-gray-700">
-                  <FiX className="w-6 h-6" />
-                </button>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  value={editForm.name || ''}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                  required
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-                    <FiAlertCircle /> {errors.name}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  value={editForm.description || ''}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                  rows={3}
-                  required
-                />
-                {errors.description && (
-                  <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-                    <FiAlertCircle /> {errors.description}
-                  </p>
-                )}
-              </div>
-              <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
-                Save Changes
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
               </button>
-            </motion.form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

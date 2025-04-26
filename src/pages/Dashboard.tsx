@@ -1,34 +1,26 @@
-import { FC, FormEvent, useState } from 'react';
+import { FC, FormEvent, useState, useEffect } from 'react';
 import { FiAlertCircle, FiUsers, FiLayers } from 'react-icons/fi';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
+import axios, { AxiosError } from 'axios';
 
-// Types for Client and Program
 interface Client {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
   dateOfBirth: string;
   registeredAt: string;
-  programIds: string[];
+  Programs: { id: number; name: string }[];
 }
 
 interface Program {
-  id: string;
+  id: number;
   name: string;
   description: string;
   createdAt: string;
 }
 
-interface DashboardProps {
-  addClient: (client: Omit<Client, 'id' | 'registeredAt' | 'programIds'>) => void;
-  addProgram: (program: Omit<Program, 'id' | 'createdAt'>) => void;
-  clients: Client[];
-  programs: Program[];
-}
-
-// Types for form data
 interface ProgramForm {
   name: string;
   description: string;
@@ -41,87 +33,106 @@ interface ClientForm {
   dateOfBirth: string;
 }
 
-// Helper to get month name from date string
+interface ErrorResponse {
+  error?: string;
+}
+
 const getMonthName = (dateStr: string) => {
   const date = new Date(dateStr);
   return date.toLocaleString('default', { month: 'short' });
 };
 
-// Aggregate data for charts
 const aggregateChartData = (clients: Client[], programs: Program[]) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  // Initialize chart data for the last 6 months
-  const chartData: { month: string; enrollments: number; clients: number }[] = months.slice(0, 6).map((month) => ({
+  const chartData = months.slice(0, 6).map((month) => ({
     month,
     enrollments: 0,
     clients: 0,
   }));
 
-  // Aggregate programs by creation month
   programs.forEach((program) => {
     const monthName = getMonthName(program.createdAt);
     const index = chartData.findIndex((data) => data.month === monthName);
-    if (index !== -1) {
-      chartData[index].enrollments += 1; // Increment enrollments for that month
-    }
+    if (index !== -1) chartData[index].enrollments += 1;
   });
 
-  // Aggregate clients by registration month
   clients.forEach((client) => {
     const monthName = getMonthName(client.registeredAt);
     const index = chartData.findIndex((data) => data.month === monthName);
-    if (index !== -1) {
-      chartData[index].clients += 1; // Increment clients for that month
-    }
+    if (index !== -1) chartData[index].clients += 1;
   });
 
   return chartData;
 };
 
-const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, programs }) => {
-  // State to hold form data and errors
+const Dashboard: FC = () => {
   const [programForm, setProgramForm] = useState<ProgramForm>({ name: '', description: '' });
   const [clientForm, setClientForm] = useState<ClientForm>({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [clients, setClients] = useState<Client[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
 
-  // Calculate summary metrics
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const [clientsRes, programsRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/clients', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:5000/api/programs', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        setClients(clientsRes.data);
+        setPrograms(programsRes.data);
+      } catch (error) {
+        const errorMessage =
+          (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error fetching data';
+        toast.error(errorMessage, { autoClose: 3000 });
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const totalPrograms = programs.length;
   const totalClients = clients.length;
-  const pendingActions = clients.filter((client) => client.programIds.length > 0).length; // Clients enrolled in programs
-
-  // Aggregate chart data
+  const pendingActions = clients.filter((client) => client.Programs.length > 0).length;
   const chartData = aggregateChartData(clients, programs);
 
-  // Handle Program form submission
-  const handleProgramSubmit = (e: FormEvent) => {
+  const handleProgramSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
-    if (!programForm.name) {
-      newErrors.programName = 'Program name is required';
-    }
-    if (!programForm.description) {
-      newErrors.programDescription = 'Program description is required';
-    }
+    if (!programForm.name) newErrors.programName = 'Program name is required';
+    if (!programForm.description) newErrors.programDescription = 'Program description is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('Please fill in all required fields.', { position: 'top-right' });
+      toast.error('Please fill in all required fields.', { autoClose: 3000 });
       return;
     }
 
-    addProgram({
-      name: programForm.name,
-      description: programForm.description,
-    });
-
-    toast.success('Program created successfully!', { position: 'top-right' });
-    setProgramForm({ name: '', description: '' });
-    setErrors({});
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:5000/api/programs',
+        { name: programForm.name, description: programForm.description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPrograms((prev) => [...prev, response.data]);
+      setProgramForm({ name: '', description: '' });
+      setErrors({});
+      toast.success('Program created successfully!', { autoClose: 3000, theme: 'colored' });
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error creating program';
+      toast.error(errorMessage, { autoClose: 3000 });
+    }
   };
 
-  // Handle Client form submission
-  const handleClientSubmit = (e: FormEvent) => {
+  const handleClientSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
     if (!clientForm.firstName) newErrors.firstName = 'First name is required';
@@ -137,32 +148,38 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('Please correct the errors in the form.', { position: 'top-right' });
+      toast.error('Please correct the errors in the form.', { autoClose: 3000 });
       return;
     }
 
-    addClient({
-      firstName: clientForm.firstName,
-      lastName: clientForm.lastName,
-      email: clientForm.email,
-      dateOfBirth: clientForm.dateOfBirth,
-    });
-
-    toast.success('Client registered successfully!', { position: 'top-right' });
-    setClientForm({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
-    setErrors({});
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:5000/api/clients',
+        {
+          firstName: clientForm.firstName,
+          lastName: clientForm.lastName,
+          email: clientForm.email,
+          dateOfBirth: clientForm.dateOfBirth,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setClients((prev) => [...prev, response.data]);
+      setClientForm({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
+      setErrors({});
+      toast.success('Client registered successfully!', { autoClose: 3000, theme: 'colored' });
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error registering client';
+      toast.error(errorMessage, { autoClose: 3000 });
+    }
   };
 
-  // Define fields as a typed array
   const clientFields: (keyof ClientForm)[] = ['firstName', 'lastName', 'email'];
 
   return (
     <div className="space-y-10">
-      <ToastContainer />
-      {/* === Page Title === */}
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
-
-      {/* === Summary Metrics === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
           <FiLayers className="w-8 h-8 text-blue-600" />
@@ -186,22 +203,23 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
           </div>
         </div>
       </div>
-
-      {/* === Enhanced Form Section (Now at the Top) === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* === Create Program Form === */}
         <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-100">
           <h2 className="text-xl font-semibold text-blue-700 mb-4">📋 Create Health Program</h2>
           <form onSubmit={handleProgramSubmit} className="space-y-4">
             <div>
-              <label htmlFor="programName" className="text-sm font-medium text-gray-700">Program Name</label>
+              <label htmlFor="programName" className="text-sm font-medium text-gray-700">
+                Program Name
+              </label>
               <input
                 id="programName"
                 type="text"
                 value={programForm.name}
                 onChange={(e) => setProgramForm({ ...programForm, name: e.target.value })}
                 placeholder="e.g., Malaria"
-                className={`w-full mt-1 p-3 rounded-lg border ${errors.programName ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                className={`w-full mt-1 p-3 rounded-lg border ${
+                  errors.programName ? 'border-red-500' : 'border-gray-300'
+                } focus:ring-2 focus:ring-blue-500`}
                 aria-required="true"
               />
               {errors.programName && (
@@ -211,13 +229,17 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
               )}
             </div>
             <div>
-              <label htmlFor="programDescription" className="text-sm font-medium text-gray-700">Description</label>
+              <label htmlFor="programDescription" className="text-sm font-medium text-gray-700">
+                Description
+              </label>
               <textarea
                 id="programDescription"
                 value={programForm.description}
                 onChange={(e) => setProgramForm({ ...programForm, description: e.target.value })}
                 placeholder="Program details"
-                className={`w-full mt-1 p-3 border ${errors.programDescription ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500`}
+                className={`w-full mt-1 p-3 border ${
+                  errors.programDescription ? 'border-red-500' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-blue-500`}
                 rows={3}
                 aria-required="true"
               />
@@ -227,24 +249,28 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
                 </p>
               )}
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">Create Program</button>
+            <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+              Create Program
+            </button>
           </form>
         </div>
-
-        {/* === Register Client Form === */}
         <div className="bg-white p-6 rounded-2xl shadow-lg border border-blue-100">
           <h2 className="text-xl font-semibold text-blue-700 mb-4">🧑 Register Client</h2>
           <form onSubmit={handleClientSubmit} className="space-y-4">
             {clientFields.map((field) => (
               <div key={field}>
-                <label htmlFor={field} className="text-sm font-medium text-gray-700 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                <label htmlFor={field} className="text-sm font-medium text-gray-700 capitalize">
+                  {field.replace(/([A-Z])/g, ' $1')}
+                </label>
                 <input
                   id={field}
                   type={field === 'email' ? 'email' : 'text'}
                   value={clientForm[field]}
                   onChange={(e) => setClientForm({ ...clientForm, [field]: e.target.value })}
                   placeholder={field === 'email' ? 'Email address' : `Enter ${field}`}
-                  className={`w-full mt-1 p-3 rounded-lg border ${errors[field] ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full mt-1 p-3 rounded-lg border ${
+                    errors[field] ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-blue-500`}
                   aria-required="true"
                 />
                 {errors[field] && (
@@ -255,13 +281,17 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
               </div>
             ))}
             <div>
-              <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of Birth</label>
+              <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">
+                Date of Birth
+              </label>
               <input
                 id="dateOfBirth"
                 type="date"
                 value={clientForm.dateOfBirth}
                 onChange={(e) => setClientForm({ ...clientForm, dateOfBirth: e.target.value })}
-                className={`w-full mt-1 p-3 border ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500`}
+                className={`w-full mt-1 p-3 border ${
+                  errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-blue-500`}
                 aria-required="true"
               />
               {errors.dateOfBirth && (
@@ -270,14 +300,13 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
                 </p>
               )}
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">Register Client</button>
+            <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+              Register Client
+            </button>
           </form>
         </div>
       </div>
-
-      {/* === Charts Section === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Line Chart for Enrollments */}
         <div className="bg-white p-6 rounded-xl shadow-md">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">📈 Program Creation Trend</h3>
           <div className="h-64">
@@ -292,8 +321,6 @@ const Dashboard: FC<DashboardProps> = ({ addClient, addProgram, clients, program
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Bar Chart for Clients */}
         <div className="bg-white p-6 rounded-xl shadow-md">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">📊 Clients Registered</h3>
           <div className="h-64">

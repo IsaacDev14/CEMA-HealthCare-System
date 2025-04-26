@@ -1,386 +1,348 @@
-import { FC, useState, ChangeEvent, FormEvent } from 'react';
-import { FiSearch, FiTrash2, FiEye, FiEdit, FiX, FiAlertCircle } from 'react-icons/fi';
-import { ToastContainer, toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
+import { FC, useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { FiSearch, FiTrash2, FiEye, FiEdit, FiX } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import axios, { AxiosError } from 'axios';
 
 interface Client {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
   dateOfBirth: string;
   registeredAt: string;
-  programIds: string[];
+  Programs: { id: number; name: string }[];
 }
 
-interface Program {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
+interface ErrorResponse {
+  error?: string;
 }
 
-interface ClientsProps {
-  clients: Client[];
-  setClients: (clients: Client[]) => void;
-  programs: Program[];
-}
-
-const Clients: FC<ClientsProps> = ({ clients, setClients, programs }) => {
+const Clients: FC = () => {
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [conditionFilter, setConditionFilter] = useState<string>('All');
-  const [viewClient, setViewClient] = useState<Client | null>(null);
-  const [editClient, setEditClient] = useState<Client | null>(null);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('view');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editForm, setEditForm] = useState<Partial<Client>>({});
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false);
+  const [deleteClientId, setDeleteClientId] = useState<number | null>(null);
 
-  const conditions = ['All', 'Hypertension', 'Diabetes', 'Asthma', 'Other'];
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/clients', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setClients(response.data);
+      } catch (error) {
+        const errorMessage =
+          (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error fetching clients';
+        toast.error(errorMessage, { autoClose: 3000 });
+      }
+    };
 
-  const filteredClients = clients.filter((client) => {
-    const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchTerm.toLowerCase());
-    const clientCondition = client.email.includes('example') ? 'Unknown' : 'Other';
-    const matchesCondition = conditionFilter === 'All' || clientCondition === conditionFilter;
-    return matchesSearch && matchesCondition;
-  });
-
-  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
-  const paginatedClients = filteredClients.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+    fetchClients();
+  }, []);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleConditionFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setConditionFilter(e.target.value);
-    setCurrentPage(1);
   };
 
   const handleView = (client: Client) => {
-    setViewClient(client);
+    setSelectedClient(client);
+    setModalMode('view');
+    setModalOpen(true);
   };
 
   const handleEdit = (client: Client) => {
-    setEditClient(client);
-    setEditForm(client);
+    setSelectedClient(client);
+    setEditForm({
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      dateOfBirth: client.dateOfBirth,
+    });
+    setModalMode('edit');
+    setModalOpen(true);
   };
 
-  const handleEditSubmit = (e: FormEvent) => {
+  const handleDeleteRequest = (id: number) => {
+    setDeleteClientId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteClientId) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const client = clients.find((c) => c.id === deleteClientId);
+      await axios.delete(`http://localhost:5000/api/clients/${deleteClientId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setClients(clients.filter((client) => client.id !== deleteClientId));
+      toast.success(
+        `Client "${client ? `${client.firstName} ${client.lastName}` : 'Unknown'}" deleted successfully!`,
+        { autoClose: 3000, theme: 'colored' }
+      );
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error deleting client';
+      toast.error(errorMessage, { autoClose: 3000 });
+    } finally {
+      setConfirmDeleteOpen(false);
+      setDeleteClientId(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmDeleteOpen(false);
+    setDeleteClientId(null);
+  };
+
+  const handleEditSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!selectedClient) return;
+
     const newErrors: { [key: string]: string } = {};
     if (!editForm.firstName) newErrors.firstName = 'First name is required';
     if (!editForm.lastName) newErrors.lastName = 'Last name is required';
     if (!editForm.email) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email!)) newErrors.email = 'Invalid email format';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email || '')) newErrors.email = 'Invalid email format';
     if (!editForm.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
     else {
       const today = new Date();
-      const dob = new Date(editForm.dateOfBirth!);
+      const dob = new Date(editForm.dateOfBirth);
       if (dob >= today) newErrors.dateOfBirth = 'Date of birth must be in the past';
     }
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      toast.error('Please correct the errors in the form.', { position: 'top-right' });
+      setFormErrors(newErrors);
+      toast.error('Please correct the errors in the form.', { autoClose: 3000 });
       return;
     }
 
-    setClients(clients.map((c) => (c.id === editClient!.id ? { ...c, ...editForm } : c)));
-    toast.success('Client updated successfully!', { position: 'top-right' });
-    setEditClient(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:5000/api/clients/${selectedClient.id}`,
+        editForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setClients(clients.map((client) => (client.id === selectedClient.id ? response.data : client)));
+      setModalOpen(false);
+      setFormErrors({});
+      toast.success(
+        `Client "${editForm.firstName} ${editForm.lastName}" updated successfully!`,
+        { autoClose: 3000, theme: 'colored' }
+      );
+    } catch (error) {
+      const errorMessage =
+        (error as AxiosError<ErrorResponse>).response?.data?.error || 'Error updating client';
+      toast.error(errorMessage, { autoClose: 3000 });
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedClient(null);
     setEditForm({});
-    setErrors({});
+    setFormErrors({});
   };
 
-  const handleDelete = (id: string) => {
-    setClients(clients.filter((client) => client.id !== id));
-    toast.success('Client deleted successfully!', { position: 'top-right' });
-  };
-
-  const handleProgramToggle = (programId: string) => {
-    const currentProgramIds = editForm.programIds || [];
-    const updatedProgramIds = currentProgramIds.includes(programId)
-      ? currentProgramIds.filter((id) => id !== programId)
-      : [...currentProgramIds, programId];
-    setEditForm({ ...editForm, programIds: updatedProgramIds });
-  };
+  const filteredClients = clients.filter((client) =>
+    `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
-      <ToastContainer />
       <h2 className="text-2xl font-semibold text-gray-800">Clients</h2>
-
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search clients by name..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 placeholder-gray-400"
-              aria-label="Search clients"
-            />
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          </div>
-        </div>
-        <div className="w-full sm:w-48">
-          <select
-            value={conditionFilter}
-            onChange={handleConditionFilterChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50"
-            aria-label="Filter by condition"
-          >
-            {conditions.map((condition) => (
-              <option key={condition} value={condition}>
-                {condition}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search clients by name..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full p-3 pl-10 border border-gray-300 rounded-lg"
+        />
+        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
-
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date of Birth
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Birth</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered At</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programs</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              <AnimatePresence>
-                {paginatedClients.length === 0 ? (
-                  <motion.tr
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                      No clients found.
+              {filteredClients.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">No clients found.</td>
+                </tr>
+              ) : (
+                filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{`${client.firstName} ${client.lastName}`}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(client.dateOfBirth).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(client.registeredAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.Programs.map((p) => p.name).join(', ')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex gap-2">
+                        <button onClick={() => handleView(client)} className="text-blue-600 hover:text-blue-800" title="View">
+                          <FiEye className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleEdit(client)} className="text-green-600 hover:text-green-800" title="Edit">
+                          <FiEdit className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => handleDeleteRequest(client.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
-                  </motion.tr>
-                ) : (
-                  paginatedClients.map((client) => (
-                    <motion.tr
-                      key={client.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {client.firstName} {client.lastName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {client.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {client.dateOfBirth}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleView(client)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
-                            aria-label={`View ${client.firstName} ${client.lastName}`}
-                          >
-                            <FiEye className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(client)}
-                            className="text-green-600 hover:text-green-800 transition-colors duration-200"
-                            aria-label={`Edit ${client.firstName} ${client.lastName}`}
-                          >
-                            <FiEdit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(client.id)}
-                            className="text-red-600 hover:text-red-800 transition-colors duration-200"
-                            aria-label={`Delete ${client.firstName} ${client.lastName}`}
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </AnimatePresence>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-            aria-label="Previous page"
-          >
-            Previous
-          </button>
-          <span className="text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-            aria-label="Next page"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      <AnimatePresence>
-        {viewClient && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">Client Details</h3>
-                <button onClick={() => setViewClient(null)} className="text-gray-500 hover:text-gray-700">
-                  <FiX className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <p><strong>Name:</strong> {viewClient.firstName} {viewClient.lastName}</p>
-                <p><strong>Email:</strong> {viewClient.email}</p>
-                <p><strong>Date of Birth:</strong> {viewClient.dateOfBirth}</p>
-                <p><strong>Registered At:</strong> {viewClient.registeredAt}</p>
-                <p><strong>Enrolled Programs:</strong> {viewClient.programIds.length > 0 ? viewClient.programIds.map(id => programs.find(p => p.id === id)?.name).join(', ') : 'None'}</p>
-              </div>
-              <button
-                onClick={() => setViewClient(null)}
-                className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-              >
-                Close
+      {/* View/Edit Modal */}
+      {modalOpen && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">
+                {modalMode === 'view' ? 'Client Details' : 'Edit Client'}
+              </h3>
+              <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
+                <FiX className="w-6 h-6" />
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
 
-      <AnimatePresence>
-        {editClient && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">Edit Client</h3>
-                <button onClick={() => setEditClient(null)} className="text-gray-500 hover:text-gray-700">
-                  <FiX className="w-6 h-6" />
+            {modalMode === 'view' ? (
+              <div className="space-y-4">
+                <p><strong>Name:</strong> {selectedClient.firstName} {selectedClient.lastName}</p>
+                <p><strong>Email:</strong> {selectedClient.email}</p>
+                <p><strong>Date of Birth:</strong> {new Date(selectedClient.dateOfBirth).toLocaleDateString()}</p>
+                <p><strong>Registered At:</strong> {new Date(selectedClient.registeredAt).toLocaleDateString()}</p>
+                <p><strong>Programs:</strong> {selectedClient.Programs.map((p) => p.name).join(', ') || 'None'}</p>
+                <button
+                  onClick={closeModal}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Close
                 </button>
               </div>
+            ) : (
               <form onSubmit={handleEditSubmit} className="space-y-4">
-                {['firstName', 'lastName', 'email'].map((field) => (
-                  <div key={field}>
-                    <label htmlFor={`edit-${field}`} className="text-sm font-medium text-gray-700 capitalize">
-                      {field.replace(/([A-Z])/g, ' $1')}
-                    </label>
-                    <input
-                      id={`edit-${field}`}
-                      type={field === 'email' ? 'email' : 'text'}
-                      value={(editForm[field as keyof Client] as string) || ''}
-                      onChange={(e) => setEditForm({ ...editForm, [field]: e.target.value })}
-                      placeholder={`Enter ${field}`}
-                      className={`w-full mt-1 p-3 rounded-lg border ${errors[field] ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 bg-gray-50 placeholder-gray-400`}
-                    />
-                    {errors[field] && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <FiAlertCircle className="w-4 h-4" /> {errors[field]}
-                      </p>
-                    )}
-                  </div>
-                ))}
                 <div>
-                  <label htmlFor="edit-dateOfBirth" className="text-sm font-medium text-gray-700">Date of Birth</label>
+                  <label htmlFor="firstName" className="text-sm font-medium text-gray-700">First Name</label>
                   <input
-                    id="edit-dateOfBirth"
+                    id="firstName"
+                    type="text"
+                    value={editForm.firstName || ''}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                    className={`w-full p-2 border ${formErrors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
+                  />
+                  {formErrors.firstName && <p className="text-red-500 text-sm">{formErrors.firstName}</p>}
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="text-sm font-medium text-gray-700">Last Name</label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={editForm.lastName || ''}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                    className={`w-full p-2 border ${formErrors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
+                  />
+                  {formErrors.lastName && <p className="text-red-500 text-sm">{formErrors.lastName}</p>}
+                </div>
+                <div>
+                  <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={editForm.email || ''}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className={`w-full p-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
+                  />
+                  {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
+                </div>
+                <div>
+                  <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of Birth</label>
+                  <input
+                    id="dateOfBirth"
                     type="date"
                     value={editForm.dateOfBirth || ''}
                     onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
-                    className={`w-full mt-1 p-3 border ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50`}
+                    className={`w-full p-2 border ${formErrors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
                   />
-                  {errors.dateOfBirth && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                      <FiAlertCircle className="w-4 h-4" /> {errors.dateOfBirth}
-                    </p>
-                  )}
+                  {formErrors.dateOfBirth && <p className="text-red-500 text-sm">{formErrors.dateOfBirth}</p>}
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Enrolled Programs</label>
-                  <div className="mt-1 space-y-2">
-                    {programs.map((program) => (
-                      <div key={program.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`program-${program.id}`}
-                          checked={(editForm.programIds || []).includes(program.id)}
-                          onChange={() => handleProgramToggle(program.id)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor={`program-${program.id}`} className="text-sm text-gray-700">{program.name}</label>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
-                >
-                  Save Changes
-                </button>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Confirm Deletion</h3>
+              <button onClick={handleDeleteCancel} className="text-gray-600 hover:text-gray-800">
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete{' '}
+              {clients.find((c) => c.id === deleteClientId)
+                ? `"${clients.find((c) => c.id === deleteClientId)!.firstName} ${clients.find((c) => c.id === deleteClientId)!.lastName}"`
+                : 'this client'}? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
