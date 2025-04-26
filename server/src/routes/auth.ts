@@ -23,6 +23,7 @@ const registerHandler: RequestHandler = async (req: Request, res: Response): Pro
       return;
     }
 
+    console.log('Checking for existing user:', username);
     const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       console.log('Username already exists:', username);
@@ -96,7 +97,6 @@ const loginHandler: RequestHandler = async (req: Request, res: Response): Promis
   }
 };
 
-// Use the handlers for routes
 router.post('/register', registerHandler);
 router.post('/login', loginHandler);
 
