@@ -12,7 +12,7 @@ export default defineConfig({
     strictPort: true,  // Fail if the specified port is occupied
   },
   preview: {
-    allowedHosts: ['cema-healthcare-system-1.onrender.com'],  // Add your host here
+    allowedHosts: ['https://cema-healthcare-system-1.onrender.com'],  // Add your host here
     open: true,         // Automatically open the app in the browser when previewing
   },
   optimizeDeps: {
