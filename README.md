@@ -1,6 +1,6 @@
 # CEMACare Health System
 
-![alt text](src/assets/dashboard.png)
+![alt text](frontend/src/assets/dashboard.png)
 
 CEMACare is a full-stack web application designed to manage health programs, clients, feedback, and suggestions for healthcare providers. It features a responsive React frontend with a modern UI and a Node.js/Express backend with SQLite for data persistence. The application supports user authentication, program management, client registration, and data visualization through charts.
 
@@ -73,27 +73,29 @@ CEMACare is a full-stack web application designed to manage health programs, cli
 - **Render**: Platform for hosting the backend
 - **Vite**: Build tool for the frontend.
 
-## Project Structure
-cemacare/
-├── backend/                # Backend directory
-│   ├── config/db.js        # Sequelize database setup
-│   ├── middleware/auth.js  # JWT authentication middleware
-│   ├── models/             # Sequelize models (Client, Program, etc.)
-│   ├── routes/             # API routes (auth, clients, etc.)
-│   └── server.js           # Backend entry point
-├── frontend/               # Frontend directory
-│   ├── src/                # Frontend source
-│   │   ├── assets/         # Static assets
-│   │   ├── components/     # React components (Layout, Sidebar, etc.)
-│   │   ├── context/        # React context
-│   │   ├── pages/          # Pages (Dashboard, Login, etc.)
-│   │   ├── types/          # TypeScript types
-│   │   ├── App.tsx         # Main app with routing
-│   │   ├── index.css       # Global styles
-│   │   └── main.tsx        # React entry point
-│   ├── index.html          # Vite HTML entry
-│   ├── vite.config.ts      # Vite configuration
-│   └── vercel.json         # Vercel deployment config
+## 📂 Project Structure
+
+### Root
+- `cemacare/`
+  - `backend/` — Backend server
+    - `config/db.js` — Sequelize database setup
+    - `middleware/auth.js` — JWT authentication middleware
+    - `models/` — Sequelize models (Client, Program, etc.)
+    - `routes/` — API routes (auth, clients, etc.)
+    - `server.js` — Backend entry point
+  - `frontend/` — Frontend application
+    - `src/` — Frontend source code
+      - `assets/` — Static assets (images, logos, etc.)
+      - `components/` — React components (Layout, Sidebar, etc.)
+      - `context/` — React context providers
+      - `pages/` — Pages (Dashboard, Login, etc.)
+      - `types/` — TypeScript types
+      - `App.tsx` — Main app component with routing
+      - `index.css` — Global styles
+      - `main.tsx` — React entry point
+    - `index.html` — Vite HTML entry
+    - `vite.config.ts` — Vite configuration
+    - `vercel.json` — Vercel deployment config
 
 
 ## Prerequisites
