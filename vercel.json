@@ -14,18 +14,25 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/cema-backend/server.js"
+      "src": "/api/(.*)",
+      "dest": "/cema-backend/server.js",
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
     },
     {
-      "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
     }
   ],
   "env": {
     "NODE_ENV": "production",
-    "VERCEL_URL": ""
+    "VERCEL_URL": "",
+    "JWT_SECRET": ""
   }
 }
