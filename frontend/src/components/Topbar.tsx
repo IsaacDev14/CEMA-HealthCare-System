@@ -19,7 +19,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     const fetchUsername = async () => {
       try {
         // Assuming you have a backend endpoint to fetch user data
-        const response = await fetch('/api/user', {
+        const response = await fetch('/api/auth/user', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,  // Include token in header
