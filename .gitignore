@@ -7,15 +7,22 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Dependencies
+node_modules/
 
-# Editor directories and files
-.vscode/*
+# Build output
+dist/
+dist-ssr/
+
+# Local environment files
+*.local
+.env
+bun.lock
+
+# IDEs and editors
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,17 +30,9 @@ dist-ssr
 *.sln
 *.sw?
 
-node_modules/
-dist/
+# Project-specific
 cema-backend/node_modules/
 cema-backend/cema.db
-.env
-bun.lock
 
-node_modules/
-dist/
-cema-backend/node_modules/
-cema-backend/cema.db
-.env
-bun.lock
-.vercel
+# Deployment
+.vercel/
