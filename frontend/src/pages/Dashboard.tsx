@@ -4,6 +4,7 @@ import { FiAlertCircle, FiUsers, FiLayers } from 'react-icons/fi';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
 import axios, { AxiosError } from 'axios';
+import { api } from '../App';
 
 interface Client {
   id: number;
@@ -85,10 +86,10 @@ const Dashboard: FC = () => {
         }
 
         const [clientsRes, programsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/clients', {
+          axios.get(`${api}/clients`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get('http://localhost:5000/api/programs', {
+          axios.get(`${api}/programs`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -136,7 +137,7 @@ const Dashboard: FC = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/programs',
+        `${api}/programs`,
         { name: programForm.name, description: programForm.description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -185,7 +186,7 @@ const Dashboard: FC = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/clients',
+        `${api}/clients`,
         {
           firstName: clientForm.firstName,
           lastName: clientForm.lastName,

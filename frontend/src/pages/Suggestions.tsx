@@ -3,6 +3,7 @@ import { FiSearch, FiTrash2, FiEye } from 'react-icons/fi';
 import { ToastContainer, toast } from 'react-toastify';
 import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
+import { api } from '../App';
 
 interface Suggestion {
   id: number;
@@ -28,7 +29,7 @@ const Suggestions: FC = () => {
     const fetchSuggestions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/suggestions', {
+        const response = await axios.get(`${api}/suggestions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSuggestions(response.data);
@@ -73,7 +74,7 @@ const Suggestions: FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/suggestions', formData, {
+      const response = await axios.post(`${api}/suggestions`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuggestions((prev) => [...prev, response.data]);
@@ -92,7 +93,7 @@ const Suggestions: FC = () => {
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/suggestions/${id}`, {
+      await axios.delete(`${api}/suggestions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuggestions((prev) => prev.filter((suggestion) => suggestion.id !== id));

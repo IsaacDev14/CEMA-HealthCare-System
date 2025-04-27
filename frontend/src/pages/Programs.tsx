@@ -2,6 +2,7 @@ import { FC, useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { FiSearch, FiTrash2, FiEye, FiEdit, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import axios, { AxiosError } from 'axios';
+import { api } from '../App';
 
 interface Program {
   id: number;
@@ -29,7 +30,7 @@ const Programs: FC = () => {
     const fetchPrograms = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/programs', {
+        const response = await axios.get(`${api}/programs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPrograms(response.data);
@@ -74,7 +75,7 @@ const Programs: FC = () => {
     try {
       const token = localStorage.getItem('token');
       const program = programs.find((p) => p.id === deleteProgramId);
-      await axios.delete(`http://localhost:5000/api/programs/${deleteProgramId}`, {
+      await axios.delete(`${api}/programs/${deleteProgramId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPrograms(programs.filter((program) => program.id !== deleteProgramId));
@@ -114,7 +115,7 @@ const Programs: FC = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/programs/${selectedProgram.id}`,
+        `${api}/programs/${selectedProgram.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );

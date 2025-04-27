@@ -2,6 +2,7 @@ import { FC, useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { FiSearch, FiTrash2, FiEye, FiEdit, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import axios, { AxiosError } from 'axios';
+import { api } from '../App';
 
 interface Client {
   id: number;
@@ -32,7 +33,7 @@ const Clients: FC = () => {
     const fetchClients = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/clients', {
+        const response = await axios.get(`${api}/clients`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setClients(response.data);
@@ -79,7 +80,7 @@ const Clients: FC = () => {
     try {
       const token = localStorage.getItem('token');
       const client = clients.find((c) => c.id === deleteClientId);
-      await axios.delete(`http://localhost:5000/api/clients/${deleteClientId}`, {
+      await axios.delete(`${api}/clients/${deleteClientId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setClients(clients.filter((client) => client.id !== deleteClientId));
@@ -127,7 +128,7 @@ const Clients: FC = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/clients/${selectedClient.id}`,
+        `${api}/clients/${selectedClient.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );

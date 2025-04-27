@@ -6,6 +6,7 @@ import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import logo from '../assets/logo.png';
 import image from '../assets/image copy.png';
+import { api } from '../App';
 
 interface ErrorResponse {
   error?: string;
@@ -31,7 +32,7 @@ const Login: FC = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${api}/auth/login`, {
         username,
         password,
       });

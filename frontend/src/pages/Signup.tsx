@@ -6,6 +6,7 @@ import axios, { AxiosError } from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import logo from '../assets/logo.png';
 import image from '../assets/image copy.png';
+import { api } from '../App';
 
 interface ErrorResponse {
   error?: string;
@@ -46,7 +47,7 @@ const Signup: FC = () => {
 
     try {
       // Make API call to register
-      await axios.post('http://localhost:5000/api/auth/register', {
+      await axios.post(`${api}/auth/register`, {
         username,
         password,
       });
