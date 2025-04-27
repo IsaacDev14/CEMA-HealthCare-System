@@ -36,3 +36,4 @@ cema-backend/node_modules/
 cema-backend/cema.db
 .env
 bun.lock
+.vercel
