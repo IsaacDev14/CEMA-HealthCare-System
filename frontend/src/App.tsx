@@ -10,7 +10,7 @@ import Clients from './pages/Clients';
 import Programs from './pages/Programs';
 import Suggestions from './pages/Suggestions';
 import Feedback from './pages/Feedback';
-export const api = "https://cema-healthcare.onrender.com/api"
+export const api = "https://cema-healthcare-system.onrender.com/api"
 
 const App = () => {
   return (
