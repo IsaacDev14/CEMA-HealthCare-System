@@ -3,6 +3,7 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const auth = require('../middleware/auth');
 const Client = require('../models/Client');
+const Program = require('../models/Program');
 
 // @route   GET /api/clients
 // @desc    Get all clients for the authenticated user
@@ -14,12 +15,22 @@ router.get('/', auth, async (req, res) => {
       where: { userId: req.user.userId },
       include: [{ model: require('../models/Program'), as: 'Programs', attributes: ['id', 'name'] }],
     });
+
+    // Use a for...of loop to properly await asynchronous operations
+    for (const client of clients) {
+      const programs = await Program.findAll({
+        where: { id: client.selectedProgram },
+      });
+      client.dataValues.Programs = programs; // Ensure programs are added to the client data
+    }
+    
     res.json(clients);
   } catch (err) {
     console.error('Error fetching clients:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // @route   POST /api/clients
 // @desc    Create a new client
@@ -40,8 +51,8 @@ router.post(
       return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { firstName, lastName, email, dateOfBirth } = req.body;
-
+    const { firstName, lastName, email, dateOfBirth,selectedProgram } = req.body;
+    console.log("req body ",req.body)
     try {
       const dob = new Date(dateOfBirth);
       if (isNaN(dob.getTime()) || dob >= new Date()) {
@@ -55,6 +66,7 @@ router.post(
         dateOfBirth,
         userId: req.user.userId,
         registeredAt: new Date(),
+        selectedProgram
       });
 
       res.status(201).json(client);

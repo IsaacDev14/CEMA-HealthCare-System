@@ -33,6 +33,7 @@ interface ClientForm {
   lastName: string;
   email: string;
   dateOfBirth: string;
+  selectedProgram: string;
 }
 
 interface ErrorResponse {
@@ -69,7 +70,7 @@ const aggregateChartData = (clients: Client[], programs: Program[]) => {
 
 const Dashboard: FC = () => {
   const [programForm, setProgramForm] = useState<ProgramForm>({ name: '', description: '' });
-  const [clientForm, setClientForm] = useState<ClientForm>({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
+  const [clientForm, setClientForm] = useState<ClientForm>({ firstName: '', lastName: '', email: '', dateOfBirth: '',selectedProgram:'' });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [clients, setClients] = useState<Client[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -113,7 +114,7 @@ const Dashboard: FC = () => {
 
   const totalPrograms = programs.length;
   const totalClients = clients.length;
-  const pendingActions = clients.filter((client) => client.Programs.length > 0).length;
+  const pendingActions = 0;
   const chartData = aggregateChartData(clients, programs);
 
   const handleProgramSubmit = async (e: FormEvent) => {
@@ -192,11 +193,12 @@ const Dashboard: FC = () => {
           lastName: clientForm.lastName,
           email: clientForm.email,
           dateOfBirth: clientForm.dateOfBirth,
+          selectedProgram:clientForm.selectedProgram
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setClients((prev) => [...prev, response.data]);
-      setClientForm({ firstName: '', lastName: '', email: '', dateOfBirth: '' });
+      setClientForm({ firstName: '', lastName: '', email: '', dateOfBirth: '',selectedProgram:'' });
       setErrors({});
       toast.success('Client registered successfully!', { autoClose: 3000, theme: 'colored' });
     } catch (error) {
@@ -336,6 +338,23 @@ const Dashboard: FC = () => {
                 </p>
               )}
             </div>
+
+            <label className="block mb-2 text-sm font-medium text-gray-900">Select Programs</label>
+            <select
+              
+              onChange={(e) => setClientForm({ ...clientForm, selectedProgram: e.target.value })}
+
+            
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {programs.map(program => (
+                <option key={program.id} value={program.id}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+
+
             <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
               Register Client
             </button>

@@ -112,3 +112,8 @@ cemacare/
    ```bash
    git clone https://github.com/yourusername/cemacare.git
    cd cemacare/frontend
+
+## License
+© 2025 CEMACare. All rights reserved. For educational purposes only.
+
+

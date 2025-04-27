@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../config/db');
+const Program = require('./Program');
 
 class Client extends Model {}
 
@@ -26,6 +27,15 @@ Client.init(
     dateOfBirth: {
       type: DataTypes.DATEONLY,
       allowNull: false,
+    },
+    selectedProgram :{
+      type: DataTypes.STRING,
+      references: {
+        model: Program, // Reference the Program model
+        key: 'id',
+      },
+      allowNull: false,
+      
     },
     registeredAt: {
       type: DataTypes.DATEONLY,
