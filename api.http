@@ -15,5 +15,6 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc0
 
 ###
 GET  http://localhost:5000/api/auth/user
+
 Content-Type: application/json
 Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc0NTc2MTM5NywiZXhwIjoxNzQ1NzY0OTk3fQ.f4lZ5bQV3DWlL2J2frXT_djS3jrfQgNgowG-xDSjoGc

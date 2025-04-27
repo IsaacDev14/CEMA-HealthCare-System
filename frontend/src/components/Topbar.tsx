@@ -1,6 +1,7 @@
 import { FC, useState, useEffect } from 'react';
 import { FiBell, FiChevronDown, FiMenu, FiX, FiSearch } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../App';
 
 interface TopbarProps {
   isSidebarOpen: boolean;
@@ -19,7 +20,7 @@ const Topbar: FC<TopbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     const fetchUsername = async () => {
       try {
         // Assuming you have a backend endpoint to fetch user data
-        const response = await fetch('/api/auth/user', {
+        const response = await fetch(`${api}/auth/user`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,  // Include token in header
