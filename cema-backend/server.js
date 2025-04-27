@@ -15,6 +15,8 @@ app.use(
   cors({
     origin: process.env.VERCEL_URL || 'http://localhost:5173',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(helmet());
@@ -54,7 +56,7 @@ Suggestion.belongsTo(User, { foreignKey: 'userId' });
 Client.belongsToMany(Program, { through: ClientProgram, foreignKey: 'clientId', as: 'Programs' });
 Program.belongsToMany(Client, { through: ClientProgram, foreignKey: 'programId', as: 'Clients' });
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   console.log('Hit root route /api');
   res.json({ message: 'Welcome to the CEMACare API' });
 });
@@ -82,12 +84,16 @@ app.use((err, req, res, next) => {
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   sequelize
-    .sync({ force: false })
+    .authenticate()
+    .then(() => {
+      console.log('Database connected');
+      return sequelize.sync({ force: false });
+    })
     .then(() => {
       console.log('Database synced');
       app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
-        console.log(`👉 Test root route: curl http://localhost:${PORT}/`);
+        console.log(`👉 Test root route: curl http://localhost:${PORT}/api`);
       });
     })
     .catch((err) => {
