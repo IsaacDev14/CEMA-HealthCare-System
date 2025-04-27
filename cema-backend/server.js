@@ -7,12 +7,13 @@ const sequelize = require('./config/db');
 
 dotenv.config();
 
+console.log('Starting cema-backend/server.js');
+
 const app = express();
 
-// Middleware
 app.use(
   cors({
-    origin: process.env.VERCEL_URL || 'http://localhost:5173', // Vercel URL or local dev
+    origin: process.env.VERCEL_URL || 'http://localhost:5173',
     credentials: true,
   })
 );
@@ -20,18 +21,17 @@ app.use(helmet());
 app.use(express.json());
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Too many requests, please try again later.',
 });
 app.use(limiter);
 
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  console.log(`Request: ${req.method} ${req.url}`);
   next();
 });
 
-// Models
 const User = require('./models/User');
 const Client = require('./models/Client');
 const Program = require('./models/Program');
@@ -39,7 +39,6 @@ const ClientProgram = require('./models/ClientProgram');
 const Feedback = require('./models/Feedback');
 const Suggestion = require('./models/Suggestion');
 
-// Model Associations
 User.hasMany(Client, { foreignKey: 'userId' });
 Client.belongsTo(User, { foreignKey: 'userId' });
 
@@ -55,8 +54,8 @@ Suggestion.belongsTo(User, { foreignKey: 'userId' });
 Client.belongsToMany(Program, { through: ClientProgram, foreignKey: 'clientId', as: 'Programs' });
 Program.belongsToMany(Client, { through: ClientProgram, foreignKey: 'programId', as: 'Clients' });
 
-// Routes
 app.get('/', (req, res) => {
+  console.log('Hit root route /api');
   res.json({ message: 'Welcome to the CEMACare API' });
 });
 
@@ -66,13 +65,11 @@ app.use('/api/programs', require('./routes/programs'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/suggestions', require('./routes/suggestions'));
 
-// Error for unmatched routes
 app.use((req, res) => {
   console.log(`Unmatched route: ${req.method} ${req.url}`);
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   console.error(err.stack);
@@ -82,12 +79,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Sync database and start server (for local dev)
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   sequelize
     .sync({ force: false })
     .then(() => {
+      console.log('Database synced');
       app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
         console.log(`👉 Test root route: curl http://localhost:${PORT}/`);
@@ -99,5 +96,4 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Export for Vercel
 module.exports = app;
