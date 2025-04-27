@@ -45,15 +45,17 @@ router.post(
     check('dateOfBirth', 'Date of birth is required').notEmpty(),
   ],
   async (req, res) => {
-    console.log('POST /api/clients called');
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array()[0].msg });
-    }
-
-    const { firstName, lastName, email, dateOfBirth,selectedProgram } = req.body;
-    console.log("req body ",req.body)
     try {
+      console.log('POST /api/clients called');
+      
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array()[0].msg });
+      }
+
+      const { firstName, lastName, email, dateOfBirth, selectedProgram } = req.body;
+      console.log("Request Body:", req.body);
+
       const dob = new Date(dateOfBirth);
       if (isNaN(dob.getTime()) || dob >= new Date()) {
         return res.status(400).json({ error: 'Invalid date of birth' });
@@ -66,16 +68,18 @@ router.post(
         dateOfBirth,
         userId: req.user.userId,
         registeredAt: new Date(),
-        selectedProgram
+        selectedProgram,
       });
 
       res.status(201).json(client);
+      
     } catch (err) {
       console.error('Error creating client:', err.message);
-      res.status(500).json({ error: 'Server error' });
+      res.status(500).json({ error: 'Server error', details: err.message });
     }
   }
 );
+
 
 // @route   PUT /api/clients/:id
 // @desc    Update a client

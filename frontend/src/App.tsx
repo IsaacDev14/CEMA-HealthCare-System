@@ -10,8 +10,8 @@ import Clients from './pages/Clients';
 import Programs from './pages/Programs';
 import Suggestions from './pages/Suggestions';
 import Feedback from './pages/Feedback';
-export const api = "https://cema-healthcare-system.onrender.com/api"
-// export const api ="http://localhost:5000/api"
+// export const api = "https://cema-healthcare-system.onrender.com/api"
+export const api ="http://localhost:5000/api"
 const App = () => {
   return (
     <BrowserRouter>
