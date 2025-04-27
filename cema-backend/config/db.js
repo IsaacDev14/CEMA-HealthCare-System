@@ -1,27 +1,13 @@
 const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const path = require('path');
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.DATABASE_PATH || './cema.db',
-  logging: process.env.NODE_ENV === 'development',
-  define: {
-    freezeTableName: true,
-  },
+  storage:
+    process.env.NODE_ENV === 'production'
+      ? '/tmp/cema.db' // Vercel writable directory
+      : path.join(__dirname, '../../cema.db'), // Local path
+  logging: process.env.NODE_ENV === 'production' ? false : console.log, // Disable logging in production
 });
-
-const testDbConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-    process.exit(1);
-  }
-};
-
-testDbConnection();
 
 module.exports = sequelize;

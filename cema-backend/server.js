@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -11,7 +10,12 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.VERCEL_URL || 'http://localhost:5173', // Vercel URL or local dev
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(express.json());
 
@@ -27,7 +31,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Models (✅ NO () after require!)
+// Models
 const User = require('./models/User');
 const Client = require('./models/Client');
 const Program = require('./models/Program');
@@ -78,15 +82,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
+// Sync database and start server (for local dev)
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  sequelize
+    .sync({ force: false })
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`👉 Test root route: curl http://localhost:${PORT}/`);
+      });
+    })
+    .catch((err) => {
+      console.error('❌ Unable to connect to the database:', err.message);
+      process.exit(1);
+    });
+}
 
-sequelize.sync({ force: false }).then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`👉 Test root route: curl http://localhost:${PORT}/`);
-  });
-}).catch((err) => {
-  console.error('❌ Unable to connect to the database:', err.message);
-  process.exit(1);
-});
+// Export for Vercel
+module.exports = app;

@@ -4,21 +4,24 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [tailwindcss(), react()],
+  base: '/', // Required for Vercel
+  build: {
+    outDir: 'dist', // Explicitly set output directory
+    sourcemap: true, // Optional: for debugging
+  },
   server: {
     host: '0.0.0.0',
-    port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173, // Vite default port
     cors: true,
-    strictPort: false, // Allow Vite to use another port if 4173 is taken
+    strictPort: false,
   },
   preview: {
     host: '0.0.0.0',
-    port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
-    allowedHosts: ['cema-healthcare-system-1.onrender.com'],
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
+    strictPort: false,
     open: true,
-    strictPort: false, // Add this to preview as well
   },
   optimizeDeps: {
     force: true,
   },
-  base: '/',
 });
