@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -68,5 +69,19 @@ router.post(
     }
   }
 );
+
+
+router.get('/user', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ username: user.username });
+  } catch (err) {
+    console.error('Error fetching user:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;
