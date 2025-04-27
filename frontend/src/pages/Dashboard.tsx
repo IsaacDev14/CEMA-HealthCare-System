@@ -2,7 +2,8 @@ import { FC, FormEvent, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiAlertCircle, FiUsers, FiLayers } from 'react-icons/fi';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import axios, { AxiosError } from 'axios';
 import { api } from '../App';
 
@@ -217,6 +218,7 @@ const Dashboard: FC = () => {
 
   return (
     <div className="space-y-10">
+            <ToastContainer />
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-md flex items-center gap-4">
